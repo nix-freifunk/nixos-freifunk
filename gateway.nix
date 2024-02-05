@@ -4,7 +4,9 @@ with lib;
 let
   cfg = config.modules.ff-gateway;
 
-  enabledFastdUnits = lib.mapAttrsToList (name: domain: lib.mkIf domain.fastd.enable "${config.services.fastd.${name}.unitName}.service") cfg.domains;
+  enabledDomains = lib.filterAttrs (_: domain: domain.enable) cfg.domains;
+
+  enabledFastdUnits = lib.mapAttrsToList (name: domain: lib.mkIf domain.fastd.enable "${config.services.fastd.${name}.unitName}.service") enabledDomains;
 
   intToHex = import ./functions/intToHex.nix { inherit lib; };
 in
@@ -50,6 +52,7 @@ in
     domains = mkOption {
       type = with types; attrsOf  (submodule({ name, ...}: {
         options = {
+          enable = mkEnableOption "enable domain" // { default = true; };
           name = mkOption {
             description = "Name of the domain";
             type = types.str;
@@ -300,7 +303,7 @@ in
 
     networking.firewall.allowedUDPPorts = lib.mapAttrsToList
     (name: domain: domain.fastd.port)
-    (lib.filterAttrs (_: domain: domain.fastd.enable) cfg.domains);
+    (lib.filterAttrs (_: domain: domain.fastd.enable) enabledDomains);
 
     nixpkgs.overlays = [(self: super: {
       fastd = super.fastd.overrideAttrs (oldAttrs: {
@@ -316,7 +319,7 @@ in
 
     services.fastd-exporter = {
       enable = true;
-      instances = lib.mapAttrs (name: domain: config.services.fastd.${name}.statusSocket) cfg.domains;
+      instances = lib.mapAttrs (name: domain: config.services.fastd.${name}.statusSocket) enabledDomains;
     };
 
     systemd.services.${config.services.fastd-exporter.unitName} = {
@@ -340,7 +343,7 @@ in
         persistInterface = false;
         l2tpOffload = true;
       })
-      cfg.domains;
+      enabledDomains;
 
     systemd.network = mkMerge (attrValues (mapAttrs (_: domain: {
       netdevs = {
@@ -424,7 +427,7 @@ in
           '';
         };
       };
-    }) cfg.domains));
+    }) enabledDomains));
 
     networking.nftables.tables.mangle.content = ''
       chain forward_extra {
@@ -433,7 +436,7 @@ in
           ip version 4 iifname { "bat-dom*", "${cfg.outInterface}", "wg-icvpn*" } oifname "${domain.batmanAdvanced.interfaceName}" tcp flags syn / syn,rst counter tcp option maxseg size set 1240 comment "mss clamping - ${domain.name} - v4"
           ip version 6 iifname "${domain.batmanAdvanced.interfaceName}" oifname { "bat-dom*", "${cfg.outInterface}", "wg-icvpn*" } tcp flags syn / syn,rst counter tcp option maxseg size set 1220 comment "mss clamping - ${domain.name} - v6"
           ip version 6 iifname { "bat-dom*", "${cfg.outInterface}", "wg-icvpn*" } oifname "${domain.batmanAdvanced.interfaceName}" tcp flags syn / syn,rst counter tcp option maxseg size set 1220 comment "mss clamping - ${domain.name} - v6"
-        '') cfg.domains)}
+        '') enabledDomains)}
       }
     '';
 
@@ -485,18 +488,18 @@ in
       pools = [] ++ builtins.concatLists (lib.optional ((builtins.length domain.ipv4.dhcpV4.pools) != 0)
         (map (pool: { inherit pool; }) domain.ipv4.dhcpV4.pools)
       );
-    }) cfg.domains;
+    }) enabledDomains;
 
     services.kea.dhcp4.settings.interfaces-config.interfaces = lib.mapAttrsToList (_: domain: mkIf domain.ipv4.dhcpV4.enable
       "${domain.batmanAdvanced.interfaceName}"
-    ) cfg.domains;
+    ) enabledDomains;
 
 
     networking.nftables.tables.nixos-fw = {
       content = ''
         chain input_extra {
           ip version 4 iifname { "mesh*" } udp sport 68 udp dport 67 counter drop comment "drop dhcp: raw mesh"
-          ${lib.concatStringsSep "\n  " (lib.mapAttrsToList (_: domain: ''ip version 4 iifname { "${domain.batmanAdvanced.interfaceName}" } udp sport 68 udp dport 67 counter accept comment "accept dhcp: ${domain.name}"'') cfg.domains)}
+          ${lib.concatStringsSep "\n  " (lib.mapAttrsToList (_: domain: ''ip version 4 iifname { "${domain.batmanAdvanced.interfaceName}" } udp sport 68 udp dport 67 counter accept comment "accept dhcp: ${domain.name}"'') enabledDomains)}
         }
         chain forward_extra {
           ${lib.concatStringsSep "\n  " (lib.mapAttrsToList (_: domain:
@@ -505,7 +508,7 @@ in
             # ip daddr { ${domain.ipv4.subnet} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" ct state established,related counter accept comment "accept related and established"
             ip6 saddr { ${domain.ipv6.subnet} } iifname "${domain.batmanAdvanced.interfaceName}" oifname "${cfg.outInterface}" counter accept
             # ip6 daddr { ${domain.ipv6.subnet} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" ct state established,related counter accept comment "accept related and established"
-          '') cfg.domains)}
+          '') enabledDomains)}
         }
       '';
     };
@@ -529,7 +532,7 @@ in
             ifname = "${domain.batmanAdvanced.interfaceName}";
             multicast_address = "ff05::2:1001";
             port = 10001;
-          }) (builtins.attrValues cfg.domains);
+          }) (builtins.attrValues enabledDomains);
         };
         webserver = {
           enable = false;
@@ -587,7 +590,7 @@ in
           Hostname = "${value.name}.${if (config.networking.domain or null) != null then config.networking.fqdn else config.networking.hostName}";
           VPN = value.fastd.enable;
         };
-      }) cfg.domains;
+      }) enabledDomains;
     };
   };
 
