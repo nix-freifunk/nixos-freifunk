@@ -104,6 +104,20 @@ in
               default = "bat-${name}";
               readOnly = true;
             };
+            gatewayBandwidthDown = mkOption {
+              type = types.str;
+              description = ''
+                Gateway bandwidth down.
+              '';
+              default = "100M";
+            };
+            gatewayBandwidthUp = mkOption {
+              type = types.str;
+              description = ''
+                Gateway bandwidth up.
+              '';
+              default = "100M";
+            };
           };
           vxlan = {
             enable = mkEnableOption "start vxlan for this domain" // { default = true; };
@@ -381,8 +395,8 @@ in
           };
           extraConfig = ''
             [BatmanAdvanced]
-            GatewayBandwidthDown=100M
-            GatewayBandwidthUp=100M
+            GatewayBandwidthDown=${domain.batmanAdvanced.gatewayBandwidthDown}
+            GatewayBandwidthUp=${domain.batmanAdvanced.gatewayBandwidthUp}
           '';
         };
       };
