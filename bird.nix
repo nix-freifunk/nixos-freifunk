@@ -11,7 +11,7 @@ let
 
 in
 {
-	options.services.freifunk.bird = {
+  options.services.freifunk.bird = {
     enable = lib.mkEnableOption "Enable Bird";
     config = lib.mkOption {
       type = types.str;
@@ -31,9 +31,9 @@ in
       type = types.listOf types.str;
       default = [ ];
     };
-	};
+  };
 
-	config = mkIf cfg.enable {
+  config = mkIf cfg.enable {
     systemd.network = {
       netdevs = {
         "80-dummy0" = {
@@ -59,9 +59,9 @@ in
         };
       };
     };
-		services.bird2 = {
-			enable = true;
-			config = ''
+    services.bird2 = {
+      enable = true;
+      config = ''
         log syslog all;
 
         ipv4 table master4;
@@ -110,6 +110,6 @@ in
 
         ${cfg.extraConfig}
       '';
-		};
-	};
+    };
+  };
 }
