@@ -10,8 +10,8 @@ let
 in
 {
 
-	options.modules.ff-gateway = {
-		enable = mkEnableOption "ffda gateway";
+  options.modules.ff-gateway = {
+    enable = mkEnableOption "ffda gateway";
 
     outInterface = mkOption {
       type = types.str;
@@ -47,14 +47,14 @@ in
       enable = mkEnableOption "enable yanic";
     };
 
-		domains = mkOption {
+    domains = mkOption {
       type = with types; attrsOf  (submodule({ name, ...}: {
-				options = {
-					name = mkOption {
-						description = "Name of the domain";
-						type = types.str;
-						default = name;
-					};
+        options = {
+          name = mkOption {
+            description = "Name of the domain";
+            type = types.str;
+            default = name;
+          };
           id = mkOption {
             description = "ID of the domain";
             type = types.int;
@@ -110,7 +110,7 @@ in
               readOnly = true;
             };
           };
-					fastd = {
+          fastd = {
             enable = mkEnableOption "start fastd for this domain" // { default = true; };
             secretKeyIncludeFile = mkOption {
               type = types.str;
@@ -118,19 +118,19 @@ in
                 Path to the fastd secret key file.
               '';
             };
-						port = mkOption {
-							type = types.port;
-							description = ''
-								Fastd listening port
-							'';
-						};
-						peerInterfacePattern = mkOption {
-							type = types.str;
-							description = ''
-								Name of the fastd interface.
-							'';
-							default = "${name}p-%k";
-						};
+            port = mkOption {
+              type = types.port;
+              description = ''
+                Fastd listening port
+              '';
+            };
+            peerInterfacePattern = mkOption {
+              type = types.str;
+              description = ''
+                Name of the fastd interface.
+              '';
+              default = "${name}p-%k";
+            };
             peerDir = mkOption {
               type = types.path;
               description = ''
@@ -244,9 +244,9 @@ in
             };
           };
         };
-			}));
-		};
-	};
+      }));
+    };
+  };
 
   imports = [
     ./fastd.nix
@@ -327,20 +327,20 @@ in
       before = enabledFastdUnits;
     };
 
-		services.fastd = mapAttrs
-			(_: domain: lib.mkIf domain.fastd.enable {
-				description = "Domain ${domain.name}";
-				peerLimit = 20;
-				interface = domain.fastd.peerInterfacePattern;
-				mode = "multitap";
-				peerDir = domain.fastd.peerDir;
-				method = [ "null@l2tp" "null" ];
-				bind = [ "any port ${toString domain.fastd.port}" ];
-		    secretKeyIncludeFile = domain.fastd.secretKeyIncludeFile;
+    services.fastd = mapAttrs
+      (_: domain: lib.mkIf domain.fastd.enable {
+        description = "Domain ${domain.name}";
+        peerLimit = 20;
+        interface = domain.fastd.peerInterfacePattern;
+        mode = "multitap";
+        peerDir = domain.fastd.peerDir;
+        method = [ "null@l2tp" "null" ];
+        bind = [ "any port ${toString domain.fastd.port}" ];
+        secretKeyIncludeFile = domain.fastd.secretKeyIncludeFile;
         persistInterface = false;
         l2tpOffload = true;
-			})
-			cfg.domains;
+      })
+      cfg.domains;
 
     systemd.network = mkMerge (attrValues (mapAttrs (_: domain: {
       netdevs = {
@@ -502,9 +502,9 @@ in
           ${lib.concatStringsSep "\n  " (lib.mapAttrsToList (_: domain:
           ''
             ip saddr { ${domain.ipv4.subnet} } iifname "${domain.batmanAdvanced.interfaceName}" oifname "${cfg.outInterface}" counter accept
-		        # ip daddr { ${domain.ipv4.subnet} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" ct state established,related counter accept comment "accept related and established"
+            # ip daddr { ${domain.ipv4.subnet} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" ct state established,related counter accept comment "accept related and established"
             ip6 saddr { ${domain.ipv6.subnet} } iifname "${domain.batmanAdvanced.interfaceName}" oifname "${cfg.outInterface}" counter accept
-		        # ip6 daddr { ${domain.ipv6.subnet} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" ct state established,related counter accept comment "accept related and established"
+            # ip6 daddr { ${domain.ipv6.subnet} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" ct state established,related counter accept comment "accept related and established"
           '') cfg.domains)}
         }
       '';
