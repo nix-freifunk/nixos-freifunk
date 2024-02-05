@@ -47,6 +47,11 @@ in
 
     yanic = {
       enable = mkEnableOption "enable yanic";
+      defaultSite = mkOption {
+        type = types.str;
+        description = "Default site for yanic";
+        default = "default";
+      };
     };
 
     domains = mkOption {
@@ -67,6 +72,11 @@ in
             description = "ID of the domain as hex representation";
             type = types.str;
             default = intToHex config.modules.ff-gateway.domains.${name}.id;
+          };
+          names = mkOption {
+            description = "List of names for the domain";
+            type = types.attrsOf types.str;
+            default = {};
           };
           mtu = mkOption {
             description = "MTU of the domain";
@@ -521,11 +531,8 @@ in
           synchronize = "1m";
           collect_interval = "1m";
           sites = {
-            ffda = {
-              domains = [
-                "ffda_da_540_kelley"
-                "ffda_da_530_ggw3"
-              ];
+            "${cfg.yanic.defaultSite}" = {
+              domains = builtins.concatMap (attrSet: builtins.attrNames attrSet) (lib.mapAttrsToList (name: value: value.names) enabledDomains);
             };
           };
           interfaces = builtins.map (domain: {
