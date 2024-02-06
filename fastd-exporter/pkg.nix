@@ -5,12 +5,12 @@
 
 buildGoModule rec {
   pname = "fastd-exporter";
-  version = "0-unstable-2022-04-27";
+  version = "0-unstable-2024-02-06";
 
   src = fetchFromGitHub {
-    owner = "herbetom";
+    owner = "freifunk-darmstadt";
     repo = "fastd-exporter";
-    rev = "0f5ea9a33292c29c13ff1baff06ae596711b80a6";
+    rev = "fb7aca668ed7d4631be91f05954b9fa1309c0445";
     sha256 = "sha256-34GHNOvqoGmY2qwjViX5hza9MiLC3DahbL/DUfzkcGY=";
   };
 
