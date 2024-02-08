@@ -1,12 +1,28 @@
-{ pkgs, lib, config, nodes, nodeName, ... }:
+{ pkgs
+, lib
+, config
+, nodes
+, nodeName
+, name
+, ... }:
 with lib;
 
 let
   cfg = config.modules.ff-gateway;
 
-  enabledDomains = lib.filterAttrs (_: domain: domain.enable) cfg.domains;
+  getOnlyEnabled = lib.filterAttrs (_: value: value.enable);
+
+  enabledDomains = getOnlyEnabled cfg.domains;
 
   enabledFastdUnits = lib.mapAttrsToList (name: domain: lib.mkIf domain.fastd.enable "${config.services.fastd.${name}.unitName}.service") enabledDomains;
+
+  # set of all gw nodes
+  gwNodes = lib.filterAttrs (_: node: node.config ? modules && node.config.modules ? ff-gateway && node.config.modules.ff-gateway.enable) nodes;
+
+  # gw nodes which aren't the current node
+  gwNodesOther = lib.filterAttrs (node: _: node != "${name}") gwNodes;
+
+  vxlanPortIpList = (lib.mapAttrsToList (name: value: { dom = "${name}"; port = "${toString value.vxlan.port}"; ips = value.vxlan.remoteLocals;}) enabledDomains);
 
   intToHex = import ./functions/intToHex.nix { inherit lib; };
 in
@@ -21,6 +37,14 @@ in
         Interface used for connecting to the internet.
       '';
       default = "enp1s0";
+    };
+
+    vxlanInterface = mkOption {
+      type = types.str;
+      description = ''
+        Interface used as the base vxlan interfaces.
+      '';
+      default = config.modules.ff-gateway.outInterface;
     };
 
     meta = {
@@ -51,6 +75,34 @@ in
         type = types.str;
         description = "Default site for yanic";
         default = "default";
+      };
+    };
+
+    vxlan = {
+      local = mkOption {
+        type = types.str;
+        description = ''
+          Local IP address for the vxlan interfaces.
+        '';
+      };
+      interfaceNames = mkOption {
+        type = types.listOf types.str;
+        description = ''
+          List of names for the vxlan interfaces. Can be used to add them to main interface.
+
+          For Example:
+
+          systemd.network.networks."10-mainif".networkConfig.VXLAN = config.modules.ff-gateway.vxlan.interfaceNames;
+        '';
+        default = lib.mapAttrsToList (_: domain: domain.vxlan.interfaceName) enabledDomains;
+        readOnly = true;
+      };
+      port = mkOption {
+        type = types.port;
+        description = ''
+          Port for the vxlan interfaces.
+        '';
+        default = 4789;
       };
     };
 
@@ -135,6 +187,30 @@ in
               '';
               default = "vx-${name}";
               readOnly = true;
+            };
+            local = mkOption {
+              type = types.str;
+              description = ''
+                Local IP address for the vxlan interface.
+              '';
+              default = config.modules.ff-gateway.vxlan.local;
+            };
+            remoteLocals = mkOption {
+              type = types.listOf types.str;
+              description = ''
+                List of other local IP addresses for the vxlan interface.
+              '';
+              default = builtins.filter (str: str != "") (lib.mapAttrsToList(_: value: (
+                "${if value.config.modules.ff-gateway.domains.${name}.enable && value.config.modules.ff-gateway.domains.${name}.vxlan.enable then value.config.modules.ff-gateway.domains.${name}.vxlan.local else ""}"
+              )) gwNodesOther);
+              readOnly = true;
+            };
+            port = mkOption {
+              type = types.port;
+              description = ''
+                Port for the vxlan interface.
+              '';
+              default = config.modules.ff-gateway.vxlan.port;
             };
           };
           fastd = {
@@ -399,6 +475,17 @@ in
             GatewayBandwidthUp=${domain.batmanAdvanced.gatewayBandwidthUp}
           '';
         };
+        "70-vxlan-${domain.name}" = mkIf domain.vxlan.enable {
+          netdevConfig = {
+            Kind = "vxlan";
+            Name = "${domain.vxlan.interfaceName}";
+          };
+          vxlanConfig = {
+            VNI = domain.vxlan.vni;
+            Local = domain.vxlan.local;
+            DestinationPort = domain.vxlan.port;
+          };
+        };
       };
       networks = {
         "77-vpn-${domain.name}-peer" = mkIf domain.fastd.enable {
@@ -450,8 +537,31 @@ in
             UseGateway=true
           '';
         };
+        "70-vxlan-${domain.name}" = mkIf domain.vxlan.enable {
+          matchConfig.Name = "${domain.vxlan.interfaceName}";
+          linkConfig = {
+            RequiredForOnline = false;
+          };
+          networkConfig = {
+            DHCP = "no";
+            IPv6AcceptRA = false;
+            LinkLocalAddressing = "ipv6";
+            BatmanAdvanced = lib.mkIf domain.batmanAdvanced.enable "${domain.batmanAdvanced.interfaceName}";
+          };
+          bridgeFDBs = builtins.map (remoteIp: {
+            bridgeFDBConfig = {
+              Destination=remoteIp;
+              MACAddress="00:00:00:00:00:00";
+            };
+          }) cfg.vxlan.remoteLocals;
+        };
       };
     }) enabledDomains));
+
+    networking.firewall.extraInputRules = builtins.concatStringsSep "\n" (builtins.map (port: ''
+      iifname { ${cfg.vxlanInterface} } ip6 saddr { ${lib.concatStringsSep ", " port.ips } } udp dport ${toString port.port} counter accept comment "accept vxlan ${port.dom}"
+    '') vxlanPortIpList);
+
 
     networking.nftables.tables.mangle.content = ''
       chain forward_extra {
@@ -614,5 +724,4 @@ in
       }) enabledDomains;
     };
   };
-
 }
