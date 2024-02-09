@@ -44,7 +44,7 @@ in
       description = ''
         Interface used as the base vxlan interfaces.
       '';
-      default = config.modules.ff-gateway.outInterface;
+      default = cfg.outInterface;
     };
 
     meta = {
@@ -123,7 +123,10 @@ in
     };
 
     domains = mkOption {
-      type = with types; attrsOf  (submodule({ name, ...}: {
+      type = with types; attrsOf  (submodule({ name, ...}:
+      let
+        dcfg = cfg.domains.${name};
+      in {
         options = {
           enable = mkEnableOption "enable domain" // { default = true; };
           name = mkOption {
@@ -139,7 +142,7 @@ in
           idHex = mkOption {
             description = "ID of the domain as hex representation";
             type = types.str;
-            default = intToHex config.modules.ff-gateway.domains.${name}.id;
+            default = intToHex dcfg.id;
           };
           names = mkOption {
             description = "List of names for the domain";
@@ -194,7 +197,7 @@ in
               description = ''
                 VXLAN ID
               '';
-              default = config.modules.ff-gateway.domains.${name}.id;
+              default = dcfg.id;
             };
             interfaceName = mkOption {
               type = types.str;
@@ -209,7 +212,7 @@ in
               description = ''
                 Local IP address for the vxlan interface.
               '';
-              default = config.modules.ff-gateway.vxlan.local;
+              default = cfg.vxlan.local;
             };
             remoteLocals = mkOption {
               type = types.listOf types.str;
@@ -217,7 +220,7 @@ in
                 List of other local IP addresses for the vxlan interface.
               '';
               default = builtins.filter (str: str != "") (lib.mapAttrsToList(_: value: (
-                "${if value.config.modules.ff-gateway.domains.${name}.enable && value.config.modules.ff-gateway.domains.${name}.vxlan.enable then value.config.modules.ff-gateway.domains.${name}.vxlan.local else ""}"
+                "${if value.dcfg.enable && value.dcfg.vxlan.enable then value.dcfg.vxlan.local else ""}"
               )) gwNodesOther);
               readOnly = true;
             };
@@ -226,7 +229,7 @@ in
               description = ''
                 Port for the vxlan interface.
               '';
-              default = config.modules.ff-gateway.vxlan.port;
+              default = cfg.vxlan.port;
             };
           };
           fastd = {
@@ -243,7 +246,7 @@ in
               description = ''
                 Fastd listening port
               '';
-              default = 10000 + (config.modules.ff-gateway.domains.${name}.id * 10);
+              default = 10000 + (dcfg.id * 10);
             };
             peerInterfacePattern = mkOption {
               type = types.str;
@@ -276,7 +279,7 @@ in
               description = ''
                 IPv4 subnet network address of this domain.
               '';
-              default = builtins.elemAt (lib.splitString "/" config.modules.ff-gateway.domains.${name}.ipv4.subnet) 0;
+              default = builtins.elemAt (lib.splitString "/" dcfg.ipv4.subnet) 0;
               readOnly = true;
             };
             subnetLength = mkOption {
@@ -284,7 +287,7 @@ in
               description = ''
                 IPv4 subnet length of this domain in CIDR notation.
               '';
-              default = builtins.elemAt (lib.splitString "/" config.modules.ff-gateway.domains.${name}.ipv4.subnet) 1;
+              default = builtins.elemAt (lib.splitString "/" dcfg.ipv4.subnet) 1;
               readOnly = true;
             };
             address = mkOption {
@@ -298,7 +301,7 @@ in
               description = ''
                 IPv4 address for the current node in CIRDR notation.
               '';
-              default = "${config.modules.ff-gateway.domains.${name}.ipv4.address}/${config.modules.ff-gateway.domains.${name}.ipv4.subnetLength}";
+              default = "${dcfg.ipv4.address}/${dcfg.ipv4.subnetLength}";
               readOnly = true;
             };
             dhcpV4 = {
@@ -315,7 +318,7 @@ in
                 description = ''
                   Gateway IP to send to DHCP clients.
                 '';
-                default = config.modules.ff-gateway.domains.${name}.ipv4.address;
+                default = dcfg.ipv4.address;
               };
               pools = mkOption {
                 type = types.listOf types.str;
@@ -339,7 +342,7 @@ in
               description = ''
                 IPv6 subnet network address of this domain.
               '';
-              default = builtins.elemAt (lib.splitString "/" config.modules.ff-gateway.domains.${name}.ipv6.subnet) 0;
+              default = builtins.elemAt (lib.splitString "/" dcfg.ipv6.subnet) 0;
               readOnly = true;
             };
             subnetLength = mkOption {
@@ -347,7 +350,7 @@ in
               description = ''
                 IPv6 subnet length of this domain in CIDR notation.
               '';
-              default = builtins.elemAt (lib.splitString "/" config.modules.ff-gateway.domains.${name}.ipv6.subnet) 1;
+              default = builtins.elemAt (lib.splitString "/" dcfg.ipv6.subnet) 1;
               readOnly = true;
             };
             address = mkOption {
@@ -361,7 +364,7 @@ in
               description = ''
                 IPv6 address for the current node in CIRDR notation.
               '';
-              default = "${config.modules.ff-gateway.domains.${name}.ipv6.address}/${config.modules.ff-gateway.domains.${name}.ipv6.subnetLength}";
+              default = "${dcfg.ipv6.address}/${dcfg.ipv6.subnetLength}";
               readOnly = true;
             };
           };
