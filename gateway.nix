@@ -78,6 +78,22 @@ in
       };
     };
 
+    fastd = {
+      secretKeyIncludeFile = mkOption {
+        type = types.str;
+        description = ''
+          Path to the fastd secret key file.
+        '';
+        default = "";
+      };
+      peerDir = mkOption {
+        type = types.path;
+        description = ''
+          Path to the fastd peer directory.
+        '';
+      };
+    };
+
     vxlan = {
       local = mkOption {
         type = types.str;
@@ -220,12 +236,14 @@ in
               description = ''
                 Path to the fastd secret key file.
               '';
+              default = cfg.fastd.secretKeyIncludeFile;
             };
             port = mkOption {
               type = types.port;
               description = ''
                 Fastd listening port
               '';
+              default = 10000 + (config.modules.ff-gateway.domains.${name}.id * 10);
             };
             peerInterfacePattern = mkOption {
               type = types.str;
@@ -239,6 +257,7 @@ in
               description = ''
                 Path to the fastd peer directory.
               '';
+              default = cfg.fastd.peerDir;
             };
           };
           bird = {
