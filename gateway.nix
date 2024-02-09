@@ -553,7 +553,7 @@ in
               Destination=remoteIp;
               MACAddress="00:00:00:00:00:00";
             };
-          }) cfg.vxlan.remoteLocals;
+          }) domain.vxlan.remoteLocals;
         };
       };
     }) enabledDomains));
