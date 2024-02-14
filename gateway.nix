@@ -220,7 +220,8 @@ in
                 List of other local IP addresses for the vxlan interface.
               '';
               default = builtins.filter (str: str != "") (lib.mapAttrsToList(_: value: (
-                "${if value.dcfg.enable && value.dcfg.vxlan.enable then value.dcfg.vxlan.local else ""}"
+                # "${if value.dcfg.enable && value.dcfg.vxlan.enable then value.dcfg.vxlan.local else ""}"
+                "${if value.config.modules.ff-gateway.domains.${name}.enable && value.config.modules.ff-gateway.domains.${name}.vxlan.enable then value.config.modules.ff-gateway.domains.${name}.vxlan.local else ""}"
               )) gwNodesOther);
               readOnly = true;
             };
@@ -268,40 +269,96 @@ in
           };
           ipv4 = {
             enable = mkEnableOption "start ipv4 for this domain" // { default = true; };
-            subnet = mkOption {
-              type = types.str;
-              description = ''
-                IPv4 subnet of this domain.
-              '';
+
+            prefixes = mkOption {
+              type = with types; attrsOf  (submodule({ name, ...}: {
+                options = let
+                  pcfg = dcfg.ipv4.prefixes."${name}";
+                in {
+                  prefix = mkOption {
+                    type = types.str;
+                    description = ''
+                      IPv4 prefix
+                    '';
+                    default = "${name}";
+                  };
+                  network = mkOption {
+                    type = types.str;
+                    description = ''
+                      IPv4 Network address of this Prefix.
+                    '';
+                    default = builtins.elemAt (lib.splitString "/" pcfg.prefix) 0;
+                    readOnly = true;
+                  };
+                  length = mkOption {
+                    type = types.str;
+                    description = ''
+                      Length of this prefix in CIDR notation.
+                    '';
+                    default = builtins.elemAt (lib.splitString "/" pcfg.prefix) 1;
+                    readOnly = true;
+                  };
+                  addresses = mkOption {
+                    type = types.listOf types.str;
+                    description = ''
+                      List of IPv4 addresses to assign.
+                    '';
+                    default = [];
+                  };
+                  addressesCIDR = mkOption {
+                    type = types.listOf types.str;
+                    description = ''
+                      IPv4 address for the current node in CIRDR notation.
+                    '';
+                    default = map (ip: "${ip}/${pcfg.length}") pcfg.addresses;
+                    readOnly = true;
+                  };
+                };
+              }));
+              default = {};
             };
-            subnetNetwork = mkOption {
-              type = types.str;
-              description = ''
-                IPv4 subnet network address of this domain.
-              '';
-              default = builtins.elemAt (lib.splitString "/" dcfg.ipv4.subnet) 0;
-              readOnly = true;
-            };
-            subnetLength = mkOption {
-              type = types.str;
-              description = ''
-                IPv4 subnet length of this domain in CIDR notation.
-              '';
-              default = builtins.elemAt (lib.splitString "/" dcfg.ipv4.subnet) 1;
-              readOnly = true;
-            };
-            address = mkOption {
-              type = types.str;
-              description = ''
-                IPv4 address for the current node.
-              '';
-            };
-            addressCIDR = mkOption {
-              type = types.str;
+            # subnet = mkOption {
+            #   type = types.str;
+            #   description = ''
+            #     IPv4 subnet of this domain.
+            #   '';
+            # };
+            # subnetNetwork = mkOption {
+            #   type = types.str;
+            #   description = ''
+            #     IPv4 subnet network address of this domain.
+            #   '';
+            #   default = builtins.elemAt (lib.splitString "/" dcfg.ipv4.subnet) 0;
+            #   readOnly = true;
+            # };
+            # subnetLength = mkOption {
+            #   type = types.str;
+            #   description = ''
+            #     IPv4 subnet length of this domain in CIDR notation.
+            #   '';
+            #   default = builtins.elemAt (lib.splitString "/" dcfg.ipv4.subnet) 1;
+            #   readOnly = true;
+            # };
+            # address = mkOption {
+            #   type = types.str;
+            #   description = ''
+            #     IPv4 address for the current node.
+            #   '';
+            # };
+            addresses = mkOption {
+              type = types.listOf types.str;
               description = ''
                 IPv4 address for the current node in CIRDR notation.
               '';
-              default = "${dcfg.ipv4.address}/${dcfg.ipv4.subnetLength}";
+              default = lib.concatMap (prefix: prefix.addresses) (lib.attrValues dcfg.ipv4.prefixes);
+              readOnly = true;
+            };
+            addressesCIDR = mkOption {
+              type = types.listOf types.str;
+              description = ''
+                IPv4 address for the current node in CIRDR notation.
+              '';
+              default = lib.concatMap (prefix: prefix.addressesCIDR) (lib.attrValues dcfg.ipv4.prefixes);
               readOnly = true;
             };
             dhcpV4 = {
@@ -318,7 +375,7 @@ in
                 description = ''
                   Gateway IP to send to DHCP clients.
                 '';
-                default = dcfg.ipv4.address;
+                default = builtins.elemAt dcfg.ipv4.addresses 0;
               };
               pools = mkOption {
                 type = types.listOf types.str;
@@ -337,36 +394,99 @@ in
                 IPv6 subnet of this domain.
               '';
             };
-            subnetNetwork = mkOption {
-              type = types.str;
+            prefixes = mkOption {
+              type = with types; attrsOf  (submodule({ name, ...}: {
+                options = let
+                  pcfg = dcfg.ipv6.prefixes."${name}";
+                in {
+                  prefix = mkOption {
+                    type = types.str;
+                    description = ''
+                      IPv6 prefix
+                    '';
+                    default = "${name}";
+                  };
+                  network = mkOption {
+                    type = types.str;
+                    description = ''
+                      IPv6 Network address of this Prefix.
+                    '';
+                    default = builtins.elemAt (lib.splitString "/" pcfg.prefix) 0;
+                    readOnly = true;
+                  };
+                  length = mkOption {
+                    type = types.str;
+                    description = ''
+                      Length of this prefix in CIDR notation.
+                    '';
+                    default = builtins.elemAt (lib.splitString "/" pcfg.prefix) 1;
+                    readOnly = true;
+                  };
+                  addresses = mkOption {
+                    type = types.listOf types.str;
+                    description = ''
+                      List of IPv6 addresses to assign.
+                    '';
+                    default = [];
+                  };
+                  addressesCIDR = mkOption {
+                    type = types.listOf types.str;
+                    description = ''
+                      IPv6 address for the current node in CIRDR notation.
+                    '';
+                    default = map (ip: "${ip}/${pcfg.length}") pcfg.addresses;
+                    readOnly = true;
+                  };
+                };
+              }));
+              default = {};
+            };
+            addresses = mkOption {
+              type = types.listOf types.str;
               description = ''
-                IPv6 subnet network address of this domain.
+                IPv4 address for the current node in CIRDR notation.
               '';
-              default = builtins.elemAt (lib.splitString "/" dcfg.ipv6.subnet) 0;
+              default = lib.concatMap (prefix: prefix.addresses) (lib.attrValues dcfg.ipv6.prefixes);
               readOnly = true;
             };
-            subnetLength = mkOption {
-              type = types.str;
+            addressesCIDR = mkOption {
+              type = types.listOf types.str;
               description = ''
-                IPv6 subnet length of this domain in CIDR notation.
+                IPv4 address for the current node in CIRDR notation.
               '';
-              default = builtins.elemAt (lib.splitString "/" dcfg.ipv6.subnet) 1;
+              default = lib.concatMap (prefix: prefix.addressesCIDR) (lib.attrValues dcfg.ipv6.prefixes);
               readOnly = true;
             };
-            address = mkOption {
-              type = types.str;
-              description = ''
-                IPv6 address for the current node.
-              '';
-            };
-            addressCIDR = mkOption {
-              type = types.str;
-              description = ''
-                IPv6 address for the current node in CIRDR notation.
-              '';
-              default = "${dcfg.ipv6.address}/${dcfg.ipv6.subnetLength}";
-              readOnly = true;
-            };
+            # subnetNetwork = mkOption {
+            #   type = types.str;
+            #   description = ''
+            #     IPv6 subnet network address of this domain.
+            #   '';
+            #   default = builtins.elemAt (lib.splitString "/" dcfg.ipv6.subnet) 0;
+            #   readOnly = true;
+            # };
+            # subnetLength = mkOption {
+            #   type = types.str;
+            #   description = ''
+            #     IPv6 subnet length of this domain in CIDR notation.
+            #   '';
+            #   default = builtins.elemAt (lib.splitString "/" dcfg.ipv6.subnet) 1;
+            #   readOnly = true;
+            # };
+            # address = mkOption {
+            #   type = types.str;
+            #   description = ''
+            #     IPv6 address for the current node.
+            #   '';
+            # };
+            # addressCIDR = mkOption {
+            #   type = types.str;
+            #   description = ''
+            #     IPv6 address for the current node in CIRDR notation.
+            #   '';
+            #   default = "${dcfg.ipv6.address}/${dcfg.ipv6.subnetLength}";
+            #   readOnly = true;
+            # };
           };
         };
       }));
@@ -543,7 +663,7 @@ in
             RequiredForOnline = false;
           };
           networkConfig = {
-            Address = [] ++ lib.optional domain.ipv6.enable domain.ipv6.addressCIDR ++ lib.optional domain.ipv4.enable domain.ipv4.addressCIDR;
+            Address = [] ++ lib.optional domain.ipv6.enable domain.ipv6.addressesCIDR ++ lib.optional domain.ipv4.enable domain.ipv4.addressesCIDR;
             IPv6AcceptRA = false;
           };
           DHCP = "no";
@@ -598,7 +718,8 @@ in
 
     services.kea.dhcp4.settings.subnet4 = lib.mapAttrsToList (_: domain: mkIf domain.ipv4.dhcpV4.enable {
       id = domain.id;
-      subnet = domain.ipv4.subnet;
+      # subnet = (builtins.elemAt domain.ipv4.prefixes 0).prefix;
+      subnet = domain.ipv4.prefixes."${(builtins.elemAt (lib.attrNames domain.ipv4.prefixes) 0)}".prefix;
       interface = "${domain.batmanAdvanced.interfaceName}";
       option-data = []
         ++ lib.optional ((builtins.length domain.dnsSearchDomain) != 0)
@@ -660,7 +781,7 @@ in
         chain forward_extra {
           ${lib.concatStringsSep "\n  " (lib.mapAttrsToList (_: domain:
           ''
-            ip saddr { ${domain.ipv4.subnet} } iifname "${domain.batmanAdvanced.interfaceName}" oifname "${cfg.outInterface}" counter accept
+            ip saddr { ${lib.concatStringsSep ", " domain.ipv4.adress} } iifname "${domain.batmanAdvanced.interfaceName}" oifname "${cfg.outInterface}" counter accept
             # ip daddr { ${domain.ipv4.subnet} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" ct state established,related counter accept comment "accept related and established"
             ip6 saddr { ${domain.ipv6.subnet} } iifname "${domain.batmanAdvanced.interfaceName}" oifname "${cfg.outInterface}" counter accept
             # ip6 daddr { ${domain.ipv6.subnet} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" ct state established,related counter accept comment "accept related and established"
