@@ -15,18 +15,13 @@ in
       type = types.bool;
       default = false;
     };
-    unitName = mkOption {
-      type = types.str;
-      default = "meshviewer";
-      readOnly = true;
-      description = "The name of the service.";
-    };
 
     config = mkOption {
       type = types.attrs;
       default = {};
-      description = "The name of the config file.";
+      description = "The meshviewer config.";
     };
+
     nginx = {
       enable = mkOption {
         type = types.bool;
