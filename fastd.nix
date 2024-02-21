@@ -9,7 +9,7 @@ let
     description = "fastd - ${value.description}";
     after = [ "network.target" ];
     wantedBy = [ "multi-user.target" ];
-    reload = "${pkgs.util-linux}/bin/kill -HUP $MAINPID";
+    reload = "${pkgs.busybox}/bin/echo \"MAINPID: $MAINPID, reloading\"; ${pkgs.util-linux}/bin/kill -HUP $MAINPID; ${pkgs.busybox}/bin/echo \"reload done\"";
     #path = [ pkgs.batctl ];
     serviceConfig = {
       ExecStart = "${value.package}/bin/fastd --config ${fastdConf value name}";
