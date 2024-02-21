@@ -14,7 +14,7 @@ let
 
   enabledDomains = getOnlyEnabled cfg.domains;
 
-  enabledFastdUnits = lib.mapAttrsToList (name: domain: lib.mkIf domain.fastd.enable "${config.services.fastd.${name}.unitName}.service") enabledDomains;
+  enabledFastdUnits = lib.mapAttrsToList (name: domain: lib.lists.optionals domain.fastd.enable "${config.services.fastd.${name}.unitName}.service") enabledDomains;
 
   # set of all gw nodes
   gwNodes = lib.filterAttrs (_: node: node.config ? modules && node.config.modules ? ff-gateway && node.config.modules.ff-gateway.enable) nodes;
@@ -663,7 +663,7 @@ in
             RequiredForOnline = false;
           };
           networkConfig = {
-            Address = [] ++ lib.optional domain.ipv6.enable domain.ipv6.addressesCIDR ++ lib.optional domain.ipv4.enable domain.ipv4.addressesCIDR;
+            Address = [] ++ lib.lists.optionals domain.ipv6.enable domain.ipv6.addressesCIDR ++ lib.lists.optionals domain.ipv4.enable domain.ipv4.addressesCIDR;
             IPv6AcceptRA = false;
           };
           DHCP = "no";
