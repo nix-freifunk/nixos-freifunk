@@ -781,10 +781,13 @@ in
         chain forward_extra {
           ${lib.concatStringsSep "\n  " (lib.mapAttrsToList (_: domain:
           ''
-            ip saddr { ${lib.concatStringsSep ", " domain.ipv4.adress} } iifname "${domain.batmanAdvanced.interfaceName}" oifname "${cfg.outInterface}" counter accept
-            # ip daddr { ${domain.ipv4.subnet} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" ct state established,related counter accept comment "accept related and established"
-            ip6 saddr { ${domain.ipv6.subnet} } iifname "${domain.batmanAdvanced.interfaceName}" oifname "${cfg.outInterface}" counter accept
-            # ip6 daddr { ${domain.ipv6.subnet} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" ct state established,related counter accept comment "accept related and established"
+            ip saddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv4.prefixes)} } iifname "${domain.batmanAdvanced.interfaceName}" oifname "${cfg.outInterface}" counter accept comment "${domain.name}: accept"
+            # ip daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv4.prefixes)} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" ct state established,related counter accept comment "${domain.name}: accept related and established"
+            
+            ip6 saddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv6.prefixes)} } iifname "${domain.batmanAdvanced.interfaceName}" oifname "${cfg.outInterface}" counter accept comment "${domain.name}: accept"
+            # ip6 daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv6.prefixes)} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" ct state established,related counter accept comment "${domain.name}: accept related and established"
+            ip6 daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv6.prefixes)} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" counter accept comment "${domain.name}: accept incoming ipv6"
+            ip6 daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv6.prefixes)} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" counter accept comment "${domain.name}: accept ipv6"
           '') enabledDomains)}
         }
       '';
