@@ -37,7 +37,7 @@ in
 
         var config = {
           // list images on console that match no model
-          listMissingImages: false,
+          listMissingImages: true,
           // see devices.js for different vendor model maps
           vendormodels: vendormodels,
           // set enabled categories of devices (see devices.js)
@@ -54,15 +54,15 @@ in
           version_regex: '-([0-9]+.[0-9]+.[0-9x]+([+-~][0-9]+)?)[.-]',
           // relative image paths and branch
           directories: {
-            './images/stable/factory/': 'stable',
-            './images/stable/sysupgrade/': 'stable',
-            './images/stable/other/': 'stable',
-            './images/beta/factory/': 'beta',
-            './images/beta/sysupgrade/': 'beta',
-            './images/beta/other/': 'beta',
-            './images/experimental/factory/': 'experimental',
-            './images/experimental/sysupgrade/': 'experimental',
-            './images/experimental/other/': 'experimental',
+            //'./images/stable/factory/': 'stable',
+            //'./images/stable/sysupgrade/': 'stable',
+            //'./images/stable/other/': 'stable',
+            //'./images/beta/factory/': 'beta',
+            //'./images/beta/sysupgrade/': 'beta',
+            //'./images/beta/other/': 'beta',
+            //'./images/experimental/factory/': 'experimental',
+            //'./images/experimental/sysupgrade/': 'experimental',
+            //'./images/experimental/other/': 'experimental',
             './images/nightly/factory/': 'nightly',
             './images/nightly/sysupgrade/': 'nightly',
             './images/nightly/other/': 'nightly'
