@@ -7,8 +7,8 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "freifunk-darmstadt";
     repo = "gluon-firmware-selector";
-    rev = "ce80879e5517711277ca6f368601c81ff6203042";
-    sha256 = "sha256-DDt5KZ28whWyRsnjA3C/v+eRIn3F/k5Cu928Sa1ObtY=";
+    rev = "793d1c54f6c64623d919c8db5b0e625387c3365f";
+    sha256 = "sha256-xuvJb/TlBZFD29PtnN7azFhPxWpw+PLByAMU+DNqCXE=";
   };
 
   sourceRoot = ".";
