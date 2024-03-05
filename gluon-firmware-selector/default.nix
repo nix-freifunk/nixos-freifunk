@@ -54,15 +54,15 @@ in
           version_regex: '-([0-9]+.[0-9]+.[0-9x]+([+-~][0-9]+)?)[.-]',
           // relative image paths and branch
           directories: {
-            //'./images/stable/factory/': 'stable',
-            //'./images/stable/sysupgrade/': 'stable',
-            //'./images/stable/other/': 'stable',
-            //'./images/beta/factory/': 'beta',
-            //'./images/beta/sysupgrade/': 'beta',
-            //'./images/beta/other/': 'beta',
-            //'./images/experimental/factory/': 'experimental',
-            //'./images/experimental/sysupgrade/': 'experimental',
-            //'./images/experimental/other/': 'experimental',
+            './images/stable/factory/': 'stable',
+            './images/stable/sysupgrade/': 'stable',
+            './images/stable/other/': 'stable',
+            './images/beta/factory/': 'beta',
+            './images/beta/sysupgrade/': 'beta',
+            './images/beta/other/': 'beta',
+            './images/experimental/factory/': 'experimental',
+            './images/experimental/sysupgrade/': 'experimental',
+            './images/experimental/other/': 'experimental',
             './images/nightly/factory/': 'nightly',
             './images/nightly/sysupgrade/': 'nightly',
             './images/nightly/other/': 'nightly'
@@ -74,12 +74,12 @@ in
             stable: 'Gut getestet, zuverlÃ¤ssig und stabil.',
             beta: 'Vorabtests neuer Stable-Kandidaten.',
             experimental: 'Ungetestet, teilautomatisch generiert.',
-            nightly: 'Absolut ungetestet, automatisch generiert. Nur fÃ¼r absolute Experten.'
+            nightly: 'Absolut ungetestet, automatisch generiert. Nur für absolute Experten.'
           },
           // recommended branch will be marked during selection
           recommended_branch: 'stable',
           // experimental branches (show a warning for these branches)
-          experimental_branches: ['experimental'],
+          experimental_branches: ['experimental', 'nightly'],
           // path to preview pictures directory
           preview_pictures: 'pictures/',
           // link to changelog
