@@ -4,7 +4,7 @@ with lib;
 let
   cfg = config.services.gluon-firmware-selector;
 
-  gluon-firmware-selector = pkgs.callPackage ./pkg.nix {};
+  pkg = pkgs.callPackage ./pkg.nix {};
   configFile = pkgs.writeText "config.js" cfg.config;
 
 in
@@ -99,6 +99,13 @@ in
         '';
       description = "The config.";
     };
+
+    package = mkOption {
+      type = types.package;
+      default = pkg;
+      description = "The package to use";
+    };
+
     nginx = {
       enable = mkOption {
         type = types.bool;
@@ -124,7 +131,7 @@ in
       enable = true;
       virtualHosts."${cfg.nginx.hostName}" = {
         default = cfg.nginx.default;
-        locations."/".root = "${gluon-firmware-selector}";
+        locations."/".root = "${cfg.package}";
         locations."/".extraConfig = ''
           try_files $uri $uri/ =404;
         '';
