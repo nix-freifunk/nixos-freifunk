@@ -71,7 +71,7 @@ in
           title: 'Firmware',
           // branch descriptions shown during selection
           branch_descriptions: {
-            stable: 'Gut getestet, zuverlÃ¤ssig und stabil.',
+            stable: 'Gut getestet, zuverlässig und stabil.',
             beta: 'Vorabtests neuer Stable-Kandidaten.',
             experimental: 'Ungetestet, teilautomatisch generiert.',
             nightly: 'Absolut ungetestet, automatisch generiert. Nur für absolute Experten.'
