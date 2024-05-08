@@ -11,14 +11,14 @@ in
 
     repoUrl = mkOption {
       type = types.str;
-      default = "https://git.darmstadt.ccc.de/ffda/fastd-keys.git";
+      example = "https://github.com/nix-freifunk/fastd-keys.git";
       description = "The repo that should be synced.";
     };
 
     repoBranch = mkOption {
       type = types.str;
-      default = "master";
-      description = "The repo that should be synced.";
+      default = "main";
+      description = "The repo branch that should be synced.";
     };
 
     reloadServices = mkOption {
