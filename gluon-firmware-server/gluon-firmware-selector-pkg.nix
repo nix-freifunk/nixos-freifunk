@@ -2,7 +2,7 @@
 
 stdenv.mkDerivation rec {
   pname = "gluon-firmware-selector";
-  version = "0-unstable-2024-04-19";
+  version = "0-unstable-2024-05-08";
 
   src = fetchFromGitHub {
     owner = "freifunk-darmstadt";
