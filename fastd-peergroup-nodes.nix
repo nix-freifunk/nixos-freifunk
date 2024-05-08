@@ -61,28 +61,53 @@ in
       type = types.str;
       default = "fastd-peergroup-nodes";
       readOnly = true;
-      description = "The name of the service.";
+      description = "The name of the periodic reload service.";
     };
 
+    unitNameSetup = mkOption {
+      type = types.str;
+      default = "${cfg.unitName}-setup";
+      readOnly = true;
+      description = "The name of the service to conditionally create the peer dir.";
+    };
   };
 
   config = mkIf cfg.enable {
+    systemd.services."${cfg.unitNameSetup}" = {
+      serviceConfig.Type = "oneshot";
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      script = ''
+        set -x
+
+        PEER_DIR="${cfg.peerDir}"
+
+        BIN_MKDIR=("${pkgs.coreutils}/bin/mkdir")
+        BIN_GIT=("${pkgs.git}/bin/git -C $PEER_DIR")
+
+        if [ ! -d "$PEER_DIR" ]; then
+          $BIN_MKDIR --parents $PEER_DIR
+          $BIN_GIT init --initial-branch=main
+
+          $BIN_GIT remote add origin ${cfg.repoUrl}
+          $BIN_GIT fetch origin
+          $BIN_GIT checkout -b master --track origin/${cfg.repoBranch}
+        fi
+      '';
+    };
+
     systemd.services."${cfg.unitName}" = {
       serviceConfig.Type = "oneshot";
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
       script = ''
-        BIN_MKDIR=("${pkgs.coreutils}/bin/mkdir")
+        set -x
+
         BIN_GIT=("${pkgs.git}/bin/git -C ${cfg.peerDir}")
         BIN_SYSTEMCTL=("${pkgs.systemd}/bin/systemctl")
         BIN_ECHO=("${pkgs.coreutils}/bin/echo")
 
         HEAD_PRE=$($BIN_GIT rev-parse HEAD || echo 0)
-
-        if [ ! -d "${cfg.peerDir}" ]; then
-          $BIN_MKDIR --parents ${cfg.peerDir}
-          $BIN_GIT clone ${cfg.repoUrl} ${cfg.peerDir}
-        fi
 
         $BIN_GIT remote set-url origin ${cfg.repoUrl}
         $BIN_GIT fetch origin --prune
@@ -95,7 +120,7 @@ in
 
         if [ "$HEAD_PRE" != "$HEAD_POST" ]; then
           $BIN_ECHO "changes detected, reloading services"
-          ${concatMapStringsSep "\n    " (service: "$BIN_SYSTEMCTL is-active --quiet ${service} && $BIN_SYSTEMCTL reload ${service}") cfg.reloadServices}
+          ${concatMapStringsSep "\n  " (service: "$BIN_SYSTEMCTL is-active --quiet ${service} && $BIN_SYSTEMCTL reload ${service}") cfg.reloadServices}
         fi
 
         exit 0

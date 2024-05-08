@@ -568,8 +568,14 @@ in
       after = enabledFastdUnits;
     };
 
-    systemd.services.${config.services.fastd-peergroup-nodes.unitName} = {
+    systemd.services.${config.services.fastd-peergroup-nodes.unitNameSetup} = {
       before = enabledFastdUnits;
+      requiredBy = enabledFastdUnits;
+    };
+
+    systemd.services.${config.services.fastd-peergroup-nodes.unitName} = {
+      after = enabledFastdUnits ++ [ "${config.services.fastd-peergroup-nodes.unitNameSetup}.service" ];
+      requires = enabledFastdUnits ++ [ "${config.services.fastd-peergroup-nodes.unitNameSetup}.service" ];
     };
 
     services.fastd = mapAttrs
