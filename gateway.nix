@@ -8,7 +8,7 @@
 with lib;
 
 let
-  cfg = config.modules.ff-gateway;
+  cfg = config.modules.freifunk.gateway;
 
   getOnlyEnabled = lib.filterAttrs (_: value: value.enable);
 
@@ -17,7 +17,7 @@ let
   enabledFastdUnits = lib.mapAttrsToList (name: domain: lib.lists.optionals domain.fastd.enable "${config.services.fastd.${name}.unitName}.service") enabledDomains;
 
   # set of all gw nodes
-  gwNodes = lib.filterAttrs (_: node: node.config ? modules && node.config.modules ? ff-gateway && node.config.modules.ff-gateway.enable) nodes;
+  gwNodes = lib.filterAttrs (_: node: node.config ? modules && node.config.modules ? freifunk.gateway && node.config.modules.freifunk.gateway.enable) nodes;
 
   # gw nodes which aren't the current node
   gwNodesOther = lib.filterAttrs (node: _: node != "${name}") gwNodes;
@@ -28,7 +28,7 @@ let
 in
 {
 
-  options.modules.ff-gateway = {
+  options.modules.freifunk.gateway = {
     enable = mkEnableOption "ffda gateway";
 
     outInterface = mkOption {
@@ -108,7 +108,7 @@ in
 
           For Example:
 
-          systemd.network.networks."10-mainif".networkConfig.VXLAN = config.modules.ff-gateway.vxlan.interfaceNames;
+          systemd.network.networks."10-mainif".networkConfig.VXLAN = config.modules.freifunk.gateway.vxlan.interfaceNames;
         '';
         default = lib.mapAttrsToList (_: domain: domain.vxlan.interfaceName) enabledDomains;
         readOnly = true;
@@ -221,7 +221,7 @@ in
               '';
               default = builtins.filter (str: str != "") (lib.mapAttrsToList(_: value: (
                 # "${if value.dcfg.enable && value.dcfg.vxlan.enable then value.dcfg.vxlan.local else ""}"
-                "${if value.config.modules.ff-gateway.domains.${name}.enable && value.config.modules.ff-gateway.domains.${name}.vxlan.enable then value.config.modules.ff-gateway.domains.${name}.vxlan.local else ""}"
+                "${if value.config.modules.freifunk.gateway.domains.${name}.enable && value.config.modules.freifunk.gateway.domains.${name}.vxlan.enable then value.config.modules.freifunk.gateway.domains.${name}.vxlan.local else ""}"
               )) gwNodesOther);
               readOnly = true;
             };

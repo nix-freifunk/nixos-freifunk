@@ -2,7 +2,7 @@
 with lib;
 
 let
-  cfg = config.services.meshviewer;
+  cfg = config.services.freifunk.meshviewer;
 
   meshviewer = pkgs.callPackage ./pkg.nix {};
   configFile = pkgs.writeText "config.json" (builtins.toJSON cfg.config);
@@ -10,7 +10,7 @@ in
 
 {
 
-  options.services.meshviewer = {
+  options.services.freifunk.meshviewer = {
     enable = mkOption {
       type = types.bool;
       default = false;
