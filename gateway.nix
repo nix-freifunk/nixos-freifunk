@@ -12,7 +12,7 @@ let
 
   getOnlyEnabled = lib.filterAttrs (_: value: value.enable);
 
-  enabledDomains = getOnlyEnabled cfg.domains;
+  enabledDomains = if cfg.enable then getOnlyEnabled cfg.domains else {};
 
   enabledFastdUnits = lib.mapAttrsToList (name: domain: lib.lists.optionals domain.fastd.enable "${config.services.fastd.${name}.unitName}.service") enabledDomains;
 
