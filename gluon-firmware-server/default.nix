@@ -297,6 +297,7 @@ in
                 ${lib.concatStringsSep "\n" (map (addr: "deny ${addr};") cfg.packageServer.proxyOpenWrtFeedDeniedAddrs)}
               '';
             };
+            locations."/modules".return = "301 /modules/";
             locations."/modules/" = {
               alias = "${config.users.users.firmware.home}/packages/";
               extraConfig = ''
