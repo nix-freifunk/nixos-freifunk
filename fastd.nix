@@ -12,6 +12,7 @@ let
     reload = "${pkgs.busybox}/bin/echo \"MAINPID: $MAINPID, reloading\"; ${pkgs.util-linux}/bin/kill -HUP $MAINPID; ${pkgs.busybox}/bin/echo \"reload done\"";
     #path = [ pkgs.batctl ];
     serviceConfig = {
+      Type = "notify";
       ExecStart = "${value.package}/bin/fastd --config ${fastdConf value name}";
       Restart = "always";
     };
