@@ -246,7 +246,7 @@ in
                 etag off;
               '';
             };
-            locations."/images".return = "301 /images/";
+            locations."= /images".return = "301 /images/";
             locations."/images/" = {
               alias = "${config.users.users.firmware.home}/images/";
               extraConfig = ''
@@ -259,7 +259,7 @@ in
           };
           "${cfg.firmwareSelectorServer.domain}-no-ssl" = mkIf cfg.firmwareSelectorServer.enableSSL {
             serverName = cfg.firmwareSelectorServer.domain;
-            locations."/images" = config.services.nginx.virtualHosts."${cfg.firmwareSelectorServer.domain}".locations."/images";
+            locations."= /images" = config.services.nginx.virtualHosts."${cfg.firmwareSelectorServer.domain}".locations."= /images";
             locations."/images/" = config.services.nginx.virtualHosts."${cfg.firmwareSelectorServer.domain}".locations."/images/";
             locations."/" = {
               return = "301 https://$host$request_uri";
@@ -297,7 +297,7 @@ in
                 ${lib.concatStringsSep "\n" (map (addr: "deny ${addr};") cfg.packageServer.proxyOpenWrtFeedDeniedAddrs)}
               '';
             };
-            locations."/modules".return = "301 /modules/";
+            locations."= /modules".return = "301 /modules/";
             locations."/modules/" = {
               alias = "${config.users.users.firmware.home}/packages/";
               extraConfig = ''
