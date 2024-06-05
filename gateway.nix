@@ -706,7 +706,7 @@ in
       };
     }) enabledDomains));
 
-    networking.firewall.extraInputRules = builtins.concatStringsSep "\n" (builtins.map (port: ''
+    networking.firewall.extraInputRules = builtins.concatStringsSep "\n" (builtins.map (port: lib.optionalString (builtins.length port.ips > 0) ''
       iifname { ${cfg.vxlanInterface} } ip6 saddr { ${lib.concatStringsSep ", " port.ips } } udp dport ${toString port.port} counter accept comment "accept vxlan ${port.dom}"
     '') vxlanPortIpList);
 
