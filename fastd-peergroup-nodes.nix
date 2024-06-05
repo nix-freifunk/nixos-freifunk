@@ -89,6 +89,11 @@ in
           $BIN_MKDIR --parents $PEER_DIR
           $BIN_GIT init --initial-branch=main
 
+          export GIT_COMMITTER_NAME="system"
+          export GIT_COMMITTER_EMAIL="info@example.org"
+
+          $BIN_GIT commit --allow-empty -m "init" --author "$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
+
           $BIN_GIT remote add origin ${cfg.repoUrl}
           $BIN_GIT fetch origin
           $BIN_GIT checkout -b master --track origin/${cfg.repoBranch}
