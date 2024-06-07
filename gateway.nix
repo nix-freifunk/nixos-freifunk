@@ -22,7 +22,7 @@ let
   # gw nodes which aren't the current node
   gwNodesOther = lib.filterAttrs (node: _: node != "${name}") gwNodes;
 
-  vxlanPortIpList = (lib.mapAttrsToList (name: value: { dom = "${name}"; port = "${toString value.vxlan.port}"; ips = value.vxlan.remoteLocals;}) enabledDomains);
+  vxlanPortIpList = (lib.mapAttrsToList (name: value: { dom = "${name}"; port = "${toString value.vxlan.port}"; ips = value.vxlan.remoteLocalsRO;}) enabledDomains);
 
   intToHex = import ./functions/intToHex.nix { inherit lib; };
 in
@@ -219,10 +219,17 @@ in
               description = ''
                 List of other local IP addresses for the vxlan interface.
               '';
+              default = [];
+            };
+            remoteLocalsRO = mkOption {
+              type = types.listOf types.str;
+              description = ''
+                List of all gathered and configured local IP addresses for the vxlan interface.
+              '';
               default = builtins.filter (str: str != "") (lib.mapAttrsToList(_: value: (
                 # "${if value.dcfg.enable && value.dcfg.vxlan.enable then value.dcfg.vxlan.local else ""}"
                 "${if value.config.modules.freifunk.gateway.domains.${name}.enable && value.config.modules.freifunk.gateway.domains.${name}.vxlan.enable then value.config.modules.freifunk.gateway.domains.${name}.vxlan.local else ""}"
-              )) gwNodesOther);
+              )) gwNodesOther) ++ dcfg.vxlan.remoteLocals;
               readOnly = true;
             };
             port = mkOption {
@@ -701,7 +708,7 @@ in
               Destination=remoteIp;
               MACAddress="00:00:00:00:00:00";
             };
-          }) domain.vxlan.remoteLocals;
+          }) domain.vxlan.remoteLocalsRO;
         };
       };
     }) enabledDomains));
