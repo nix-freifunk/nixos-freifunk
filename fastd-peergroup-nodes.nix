@@ -70,6 +70,12 @@ in
       readOnly = true;
       description = "The name of the service to conditionally create the peer dir.";
     };
+
+    sshCommand = mkOption {
+      type = types.str;
+      default = "${pkgs.openssh}/bin/ssh";
+      description = "The ssh command to use.";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -80,6 +86,8 @@ in
       script = ''
         set -x
 
+        export GIT_SSH_COMMAND="${cfg.sshCommand}"
+
         PEER_DIR="${cfg.peerDir}"
 
         BIN_MKDIR=("${pkgs.coreutils}/bin/mkdir")
@@ -88,9 +96,6 @@ in
         if [ ! -d "$PEER_DIR" ]; then
           $BIN_MKDIR --parents $PEER_DIR
           $BIN_GIT init --initial-branch=main
-
-          export GIT_COMMITTER_NAME="system"
-          export GIT_COMMITTER_EMAIL="info@example.org"
 
           $BIN_GIT commit --allow-empty -m "init" --author "$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
 
@@ -107,6 +112,8 @@ in
       wants = [ "network-online.target" ];
       script = ''
         set -x
+
+        export GIT_SSH_COMMAND="${cfg.sshCommand}"
 
         BIN_GIT=("${pkgs.git}/bin/git -C ${cfg.peerDir}")
         BIN_SYSTEMCTL=("${pkgs.systemd}/bin/systemctl")
