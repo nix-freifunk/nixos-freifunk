@@ -8,7 +8,13 @@ let
     psutil
   ]);
 
-  dependencies = [ python-with-mesh-announce-packages pkgs.lsb-release pkgs.ethtool pkgs.batctl ];
+  dependencies = [
+    python-with-mesh-announce-packages
+    pkgs.lsb-release
+    pkgs.ethtool
+    pkgs.batctl
+    pkgs.fastd
+  ];
 
   customToINI = lib.generators.toINI {
     # specifies how to format a key/value pair
