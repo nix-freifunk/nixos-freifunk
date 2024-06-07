@@ -21,6 +21,18 @@ in
       };
       description = "A mapping of fastd instance names to the unix socket path of the fastd instance.";
     };
+    port = mkOption {
+      type = types.int;
+      default = 9281;
+      description = "The port the exporter should listen on.";
+    };
+    listenAddress = mkOption {
+      type = types.str;
+      default = "0.0.0.0";
+      description = ''
+        Address to listen on.
+      '';
+    };
     unitName = mkOption {
       type = types.str;
       default = "fastd-exporter";
@@ -41,7 +53,7 @@ in
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
       serviceConfig = {
-        ExecStart = "${pkgs.fastd-exporter}/bin/fastd-exporter ${instanceArgs}";
+        ExecStart = "${pkgs.fastd-exporter}/bin/fastd-exporter -web.listen-address ${cfg.listenAddress}:${toString cfg.port} ${instanceArgs}";
         Restart = "always";
         RestartSec = "30s";
       };
