@@ -86,6 +86,8 @@ in
       script = ''
         set -x
 
+        export GIT_COMMITTER_NAME="system"
+        export GIT_COMMITTER_EMAIL="info@example.org"
         export GIT_SSH_COMMAND="${cfg.sshCommand}"
 
         PEER_DIR="${cfg.peerDir}"
