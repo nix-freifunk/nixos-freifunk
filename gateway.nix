@@ -92,6 +92,13 @@ in
           Path to the fastd peer directory.
         '';
       };
+      peerLimit = mkOption {
+        type = types.int;
+        description = ''
+          Maximum number of peers.
+        '';
+        default = 20;
+      };
     };
 
     vxlan = {
@@ -269,6 +276,13 @@ in
                 Path to the fastd peer directory.
               '';
               default = cfg.fastd.peerDir;
+            };
+            peerLimit = mkOption {
+              type = types.int;
+              description = ''
+                Maximum number of peers.
+              '';
+              default = cfg.fastd.peerLimit;
             };
           };
           bird = {
@@ -588,7 +602,7 @@ in
     services.fastd = mapAttrs
       (_: domain: lib.mkIf domain.fastd.enable {
         description = "Domain ${domain.name}";
-        peerLimit = 20;
+        peerLimit = domain.fastd.peerLimit;
         interface = domain.fastd.peerInterfacePattern;
         mode = "multitap";
         peerDir = domain.fastd.peerDir;
