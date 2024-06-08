@@ -345,34 +345,6 @@ in
               }));
               default = {};
             };
-            # subnet = mkOption {
-            #   type = types.str;
-            #   description = ''
-            #     IPv4 subnet of this domain.
-            #   '';
-            # };
-            # subnetNetwork = mkOption {
-            #   type = types.str;
-            #   description = ''
-            #     IPv4 subnet network address of this domain.
-            #   '';
-            #   default = builtins.elemAt (lib.splitString "/" dcfg.ipv4.subnet) 0;
-            #   readOnly = true;
-            # };
-            # subnetLength = mkOption {
-            #   type = types.str;
-            #   description = ''
-            #     IPv4 subnet length of this domain in CIDR notation.
-            #   '';
-            #   default = builtins.elemAt (lib.splitString "/" dcfg.ipv4.subnet) 1;
-            #   readOnly = true;
-            # };
-            # address = mkOption {
-            #   type = types.str;
-            #   description = ''
-            #     IPv4 address for the current node.
-            #   '';
-            # };
             addresses = mkOption {
               type = types.listOf types.str;
               description = ''
@@ -485,36 +457,6 @@ in
               default = lib.concatMap (prefix: prefix.addressesCIDR) (lib.attrValues dcfg.ipv6.prefixes);
               readOnly = true;
             };
-            # subnetNetwork = mkOption {
-            #   type = types.str;
-            #   description = ''
-            #     IPv6 subnet network address of this domain.
-            #   '';
-            #   default = builtins.elemAt (lib.splitString "/" dcfg.ipv6.subnet) 0;
-            #   readOnly = true;
-            # };
-            # subnetLength = mkOption {
-            #   type = types.str;
-            #   description = ''
-            #     IPv6 subnet length of this domain in CIDR notation.
-            #   '';
-            #   default = builtins.elemAt (lib.splitString "/" dcfg.ipv6.subnet) 1;
-            #   readOnly = true;
-            # };
-            # address = mkOption {
-            #   type = types.str;
-            #   description = ''
-            #     IPv6 address for the current node.
-            #   '';
-            # };
-            # addressCIDR = mkOption {
-            #   type = types.str;
-            #   description = ''
-            #     IPv6 address for the current node in CIRDR notation.
-            #   '';
-            #   default = "${dcfg.ipv6.address}/${dcfg.ipv6.subnetLength}";
-            #   readOnly = true;
-            # };
           };
         };
       }));
