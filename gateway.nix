@@ -127,6 +127,13 @@ in
         '';
         default = 4789;
       };
+      remoteLocals = mkOption {
+        type = types.listOf types.str;
+        description = ''
+          List of other local IP addresses for the vxlan interface.
+        '';
+        default = [];
+      };
     };
 
     domains = mkOption {
@@ -226,7 +233,7 @@ in
               description = ''
                 List of other local IP addresses for the vxlan interface.
               '';
-              default = [];
+              default = cfg.vxlan.remoteLocals;
             };
             remoteLocalsRO = mkOption {
               type = types.listOf types.str;
