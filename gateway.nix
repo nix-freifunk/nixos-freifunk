@@ -14,6 +14,8 @@ let
 
   enabledDomains = if cfg.enable then getOnlyEnabled cfg.domains else {};
 
+  enabledDomainsBird = lib.filterAttrs (_: value: value.bird.enable) enabledDomains;
+
   enabledFastdUnits = lib.mapAttrsToList (name: domain: lib.lists.optionals domain.fastd.enable "${config.services.fastd.${name}.unitName}.service") enabledDomains;
 
   # set of all gw nodes
@@ -437,9 +439,23 @@ in
                     default = map (ip: "${ip}/${pcfg.length}") pcfg.addresses;
                     readOnly = true;
                   };
+                  announce = mkOption {
+                    type = types.bool;
+                    description = ''
+                      Announce this prefix via Router Advertisments.
+                    '';
+                    default = true;
+                  };
                 };
               }));
               default = {};
+            };
+            dnsServers = mkOption {
+              type = types.listOf types.str;
+              description = ''
+                List of DNS servers to send via Router Advertisments
+              '';
+              default = [];
             };
             addresses = mkOption {
               type = types.listOf types.str;
@@ -511,6 +527,44 @@ in
 
     services.freifunk.bird = {
       enable = true;
+
+      extraConfig = ''
+
+        ${lib.concatStringsSep "\n  " (lib.mapAttrsToList (_: domain: ''
+          protocol radv radv_${domain.name} {
+            propagate routes no;
+
+            ipv6 {
+              table master6;
+              export all;
+              import none;
+            };
+
+            interface "${domain.batmanAdvanced.interfaceName}" {
+              min delay 3;
+              max ra interval 60;
+              other config no;
+              solicited ra unicast yes;
+
+              ${lib.concatStringsSep "\n    " (builtins.map (ipv6: "prefix "+ipv6.prefix+" { };") (lib.filter (domain: domain.announce) (lib.attrValues domain.ipv6.prefixes)))}
+
+              rdnss {
+                ${lib.concatStringsSep "\n      " (builtins.map (dnsServer: "ns "+dnsServer+";") domain.ipv6.dnsServers)}
+              };
+
+              dnssl {
+                ${lib.concatStringsSep "\n      " (builtins.map (dnsSearchDomain: "domain \""+dnsSearchDomain+"\";") domain.dnsSearchDomain)}
+              };
+
+              link mtu ${toString (domain.mtu)};
+            };
+
+            prefix ::/0 {
+              skip;
+            };
+          }
+        '') enabledDomainsBird)}
+      '';
     };
 
     networking.firewall.allowedUDPPorts = lib.mapAttrsToList
