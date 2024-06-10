@@ -136,6 +136,12 @@ in
       };
     };
 
+    dnsSearchDomain = mkOption {
+      description = "DNS search domain";
+      type = types.listOf types.str;
+      default = [];
+    };
+
     domains = mkOption {
       type = with types; attrsOf  (submodule({ name, ...}:
       let
@@ -171,7 +177,7 @@ in
           dnsSearchDomain = mkOption {
             description = "DNS search domain of the domain";
             type = types.listOf types.str;
-            default = [];
+            default = cfg.dnsSearchDomain;
           };
           batmanAdvanced = {
             enable = mkEnableOption "start batman-adv for this domain" // { default = true; };
