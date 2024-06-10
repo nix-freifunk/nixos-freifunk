@@ -394,12 +394,6 @@ in
           };
           ipv6 = {
             enable = mkEnableOption "start ipv6 for this domain" // { default = true; };
-            subnet = mkOption {
-              type = types.str;
-              description = ''
-                IPv6 subnet of this domain.
-              '';
-            };
             prefixes = mkOption {
               type = with types; attrsOf  (submodule({ name, ...}: {
                 options = let
@@ -700,7 +694,6 @@ in
 
     services.kea.dhcp4.settings.subnet4 = lib.mapAttrsToList (_: domain: mkIf domain.ipv4.dhcpV4.enable {
       id = domain.id;
-      # subnet = (builtins.elemAt domain.ipv4.prefixes 0).prefix;
       subnet = domain.ipv4.prefixes."${(builtins.elemAt (lib.attrNames domain.ipv4.prefixes) 0)}".prefix;
       interface = "${domain.batmanAdvanced.interfaceName}";
       option-data = []
