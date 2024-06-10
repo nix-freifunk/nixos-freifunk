@@ -9,7 +9,7 @@ in
   options.services.freifunk.bird = {
     enable = lib.mkEnableOption "Enable Bird";
     extraConfig = lib.mkOption {
-      type = types.str;
+      type = types.lines;
       default = "";
     };
     routerId = lib.mkOption {
