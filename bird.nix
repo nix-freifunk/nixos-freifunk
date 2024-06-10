@@ -96,6 +96,22 @@ in
           }
         }
 
+        protocol direct d_dummy0 {
+          interface "dummy0";
+          ipv4 {
+            import filter {
+              print "Info (Proto: ", proto, "): ", net, " allowed due to dummy0", bgp_path;
+              accept;
+            };
+          };
+          ipv6 {
+            import filter {
+              print "Info (Proto: ", proto, "): ", net, " allowed due to dummy0 ", bgp_path;
+              accept;
+            };
+          };
+        }
+
         ${cfg.extraConfig}
       '';
     };
