@@ -4,22 +4,10 @@ with lib;
 
 let
   cfg = config.services.freifunk.bird;
-
-  birdConfig = ''
-
-    '';
-
 in
 {
   options.services.freifunk.bird = {
     enable = lib.mkEnableOption "Enable Bird";
-    config = lib.mkOption {
-      type = types.str;
-      default = ''
-        # Default Bird configuration goes here
-        # ...
-      '';
-    };
     extraConfig = lib.mkOption {
       type = types.str;
       default = "";
