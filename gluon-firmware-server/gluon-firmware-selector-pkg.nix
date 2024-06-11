@@ -2,13 +2,13 @@
 
 stdenv.mkDerivation rec {
   pname = "gluon-firmware-selector";
-  version = "0-unstable-2024-05-13";
+  version = "0-unstable-2024-06-11";
 
   src = fetchFromGitHub {
     owner = "freifunk-darmstadt";
     repo = "gluon-firmware-selector";
-    rev = "eef379be93725491a32925d526e70d3364ad670a";
-    sha256 = "sha256-5xIV5sbDosOtK2tEUqq3dGX1MBrqawaZQfenyHVJq1A=";
+    rev = "9aa0ecbb58c680c469455975dff1646bb3710901";
+    sha256 = "sha256-gZFXAJGJ3ne9Pt5uWgRXmG8lqWRWvd7hwzn6oQxyn1U=";
   };
 
   sourceRoot = ".";
