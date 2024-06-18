@@ -14,4 +14,6 @@
     after = [ "network-online.target" ];
   };
 
+  networking.firewall.logRefusedConnections = lib.mkDefault false;
+
 }
