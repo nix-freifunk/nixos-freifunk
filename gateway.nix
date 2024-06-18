@@ -138,6 +138,12 @@ in
       };
     };
 
+    dnsDomainName = mkOption {
+      description = "DNS domain name";
+      type = types.str;
+      default = "";
+    };
+
     dnsSearchDomain = mkOption {
       description = "DNS search domain";
       type = types.listOf types.str;
@@ -175,6 +181,11 @@ in
             description = "MTU of the domain";
             type = types.int;
             default = 1280;
+          };
+          dnsDomainName = mkOption {
+            description = "DNS domain name";
+            type = types.str;
+            default = cfg.dnsDomainName;
           };
           dnsSearchDomain = mkOption {
             description = "DNS search domain of the domain";
@@ -751,6 +762,13 @@ in
       subnet = domain.ipv4.prefixes."${(builtins.elemAt (lib.attrNames domain.ipv4.prefixes) 0)}".prefix;
       interface = "${domain.batmanAdvanced.interfaceName}";
       option-data = []
+        ++ lib.optional (domain.dnsDomainName != "")
+          {
+            space = "dhcp4";
+            name = "domain-name";
+            code = 15;
+            data = "${domain.dnsDomainName}";
+          }
         ++ lib.optional ((builtins.length domain.dnsSearchDomain) != 0)
           {
             space = "dhcp4";
