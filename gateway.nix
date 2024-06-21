@@ -150,6 +150,12 @@ in
       default = [];
     };
 
+    blockTCPPort25 = mkOption {
+      description = "Block TCP port 25";
+      type = types.bool;
+      default = false;
+    };
+
     domains = mkOption {
       type = with types; attrsOf  (submodule({ name, ...}:
       let
@@ -829,6 +835,13 @@ in
         chain forward_extra {
           ${lib.concatStringsSep "\n  " (lib.mapAttrsToList (_: domain:
           ''
+            ${ if cfg.blockTCPPort25 then ''
+            iifname "${domain.batmanAdvanced.interfaceName}" tcp dport 25 counter reject comment "${domain.name}: don't allow smtp"
+            iifname "${domain.batmanAdvanced.interfaceName}" tcp sport 25 counter reject comment "${domain.name}: don't allow smtp"
+            oifname "${domain.batmanAdvanced.interfaceName}" tcp dport 25 counter reject comment "${domain.name}: don't allow smtp"
+            oifname "${domain.batmanAdvanced.interfaceName}" tcp sport 25 counter reject comment "${domain.name}: don't allow smtp"
+            '' else "" }
+
             ip saddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv4.prefixes)} } iifname "${domain.batmanAdvanced.interfaceName}" oifname "${cfg.outInterface}" counter accept comment "${domain.name}: accept outgoing ipv4"
             ip daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv4.prefixes)} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" ct state established,related counter accept comment "${domain.name}: accept incoming related and established ipv4"
             
