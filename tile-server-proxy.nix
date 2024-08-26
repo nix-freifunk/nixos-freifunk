@@ -137,7 +137,7 @@ in
             proxy_http_version 1.1;
             proxy_set_header Connection "";
             proxy_set_header Accept-Encoding "";
-            proxy_set_header User-Agent "Mozilla/5.0 (compatible; OSMTileCache/1.0; +mailto:noc@ffrn.de; +https://map.ffrn.de/)";
+            proxy_set_header User-Agent "Mozilla/5.0 (compatible; OSMTileCache/1.0; +mailto:${cfg.abuseContactMail}; +http://${cfg.domain}/)";
             proxy_set_header Host cartodb-basemaps-a.global.ssl.fastly.net;
             add_header X-Cache-Status $upstream_cache_status;
             add_header X-Cache-Upstream-Status $upstream_http_x_cache_status;
