@@ -9,7 +9,7 @@ This currently means [fastd](https://github.com/neocturne/fastd) and [B.A.T.M.A.
 Other software in use includes:
 
 - [kea](https://www.isc.org/kea/) for DHCPv4
-- [bird](https://bird.network.cz/) for IPv6 Router Advertisments
+- [bird](https://bird.network.cz/) for IPv6 Router Advertisements
 - [systemd-networkd](https://www.freedesktop.org/software/systemd/man/latest/systemd.network.html) for network interface configuration
 - [nftables](https://netfilter.org/projects/nftables/) as firewall
 
