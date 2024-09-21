@@ -8,6 +8,7 @@
 with lib;
 
 let
+  #config = nodes.resolver1.config;
   cfg = config.modules.freifunk.gateway;
 
   getOnlyEnabled = lib.filterAttrs (_: value: value.enable);
@@ -17,6 +18,8 @@ let
   enabledDomainsBird = lib.filterAttrs (_: value: value.bird.enable) enabledDomains;
 
   enabledFastdUnits = lib.mapAttrsToList (name: domain: lib.lists.optionals domain.fastd.enable "${config.services.fastd.${name}.unitName}.service") enabledDomains;
+
+  hasEnabledFastd = (builtins.length enabledFastdUnits) >= 1;
 
   # set of all gw nodes
   gwNodes = lib.filterAttrs (_: node: node.config ? modules && node.config.modules ? freifunk.gateway && node.config.modules.freifunk.gateway.enable) nodes;
@@ -81,6 +84,8 @@ in
     };
 
     fastd = {
+      # enable = mkEnableOption "enable fastd"   // { default = true; };
+      enable = mkEnableOption "enable fastd";
       secretKeyIncludeFile = mkOption {
         type = types.str;
         description = ''
@@ -280,7 +285,14 @@ in
             };
           };
           fastd = {
-            enable = mkEnableOption "start fastd for this domain" // { default = true; };
+            enable = mkOption {
+              type = types.bool;
+              # default = cfg.fastd.enable;
+              default = config.modules.freifunk.gateway.fastd.enable;
+              description = "start fastd for this domain.";
+            };
+
+            # enable = mkEnableOption "start fastd for this domain" // { default = cfg.fastd.enable; };
             secretKeyIncludeFile = mkOption {
               type = types.str;
               description = ''
@@ -600,21 +612,21 @@ in
       });
     })];
 
-    services.fastd-exporter = {
+    services.fastd-exporter = mkIf hasEnabledFastd {
       enable = true;
       instances = lib.mapAttrs (name: domain: config.services.fastd.${name}.statusSocket) enabledDomains;
     };
 
-    systemd.services.${config.services.fastd-exporter.unitName} = {
-      after = enabledFastdUnits;
+    systemd.services.${config.services.fastd-exporter.unitName} = mkIf hasEnabledFastd {
+      after = "${hasEnabledFastd}"; #enabledFastdUnits;
     };
 
-    systemd.services.${config.services.fastd-peergroup-nodes.unitNameSetup} = {
+    systemd.services.${config.services.fastd-peergroup-nodes.unitNameSetup} = mkIf hasEnabledFastd {
       before = enabledFastdUnits;
       requiredBy = enabledFastdUnits;
     };
 
-    systemd.services.${config.services.fastd-peergroup-nodes.unitName} = {
+    systemd.services.${config.services.fastd-peergroup-nodes.unitName} = mkIf hasEnabledFastd {
       after = enabledFastdUnits ++ [ "${config.services.fastd-peergroup-nodes.unitNameSetup}.service" ];
       requires = enabledFastdUnits ++ [ "${config.services.fastd-peergroup-nodes.unitNameSetup}.service" ];
     };
