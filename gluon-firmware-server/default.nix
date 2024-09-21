@@ -295,6 +295,7 @@ in
               extraConfig = ''
                 ${lib.concatStringsSep "\n" (map (addr: "allow ${addr};") cfg.packageServer.proxyOpenWrtFeedAllowedAddrs)}
                 ${lib.concatStringsSep "\n" (map (addr: "deny ${addr};") cfg.packageServer.proxyOpenWrtFeedDeniedAddrs)}
+                proxy_ssl_server_name on;
               '';
             };
             locations."= /modules".return = "301 /modules/";
