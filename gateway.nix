@@ -117,7 +117,7 @@ in
 
           For Example:
 
-          systemd.network.networks."10-mainif".networkConfig.VXLAN = config.modules.freifunk.gateway.vxlan.interfaceNames;
+          systemd.network.networks."20-mainif".networkConfig.VXLAN = config.modules.freifunk.gateway.vxlan.interfaceNames;
         '';
         default = lib.mapAttrsToList (_: domain: domain.vxlan.interfaceName) enabledDomains;
         readOnly = true;

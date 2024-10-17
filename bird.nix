@@ -24,7 +24,7 @@ in
   config = mkIf cfg.enable {
     systemd.network = {
       netdevs = {
-        "80-dummy0" = {
+        "10-dummy0" = {
           netdevConfig = {
             Name = "dummy0";
             Kind = "dummy";
@@ -33,7 +33,7 @@ in
 
       };
       networks = {
-        "80-dummy0" = {
+        "10-dummy0" = {
           matchConfig = {
             Name = "dummy0";
           };
@@ -97,7 +97,7 @@ in
         }
 
         protocol direct d_dummy0 {
-          interface "dummy0";
+          interface "${config.systemd.network.netdevs."10-dummy0".netdevConfig.Name}";
           ipv4 {
             import filter {
               print "Info (Proto: ", proto, "): ", net, " allowed due to dummy0", bgp_path;
