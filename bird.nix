@@ -8,6 +8,22 @@ in
 {
   options.services.freifunk.bird = {
     enable = lib.mkEnableOption "Enable Bird";
+    extraTables = lib.mkOption {
+      type = types.lines;
+      default = "";
+    };
+    extraVariables = lib.mkOption {
+      type = types.lines;
+      default = "";
+    };
+    extraFunctions = lib.mkOption {
+      type = types.lines;
+      default = "";
+    };
+    extraTemplates = lib.mkOption {
+      type = types.lines;
+      default = "";
+    };
     extraConfig = lib.mkOption {
       type = types.lines;
       default = "";
@@ -55,6 +71,8 @@ in
         ipv4 table master4;
         ipv6 table master6;
 
+        ${cfg.extraTables}
+
         router id ${cfg.routerId};
 
         protocol device {
@@ -69,6 +87,8 @@ in
         define RFC4193 = [
           fd00::/8+
         ];
+
+        ${cfg.extraVariables}
 
         function accept_default_route4() {
           if net = 0.0.0.0/0 then {
@@ -96,6 +116,8 @@ in
           }
         }
 
+        ${cfg.extraFunctions}
+
         protocol direct d_dummy0 {
           interface "${config.systemd.network.netdevs."10-dummy0".netdevConfig.Name}";
           ipv4 {
@@ -111,6 +133,8 @@ in
             };
           };
         }
+
+        ${cfg.extraTemplates}
 
         ${cfg.extraConfig}
       '';
