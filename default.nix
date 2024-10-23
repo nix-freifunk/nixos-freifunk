@@ -6,6 +6,7 @@
     ./gateway.nix
     ./yanic.nix
     ./gluon-firmware-server
+    ./batman-adv-textexport.nix
   ];
 
   # Delay nginx startup until network is up, should help with proxy hostname resolution

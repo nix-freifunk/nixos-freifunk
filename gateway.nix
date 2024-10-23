@@ -584,6 +584,10 @@ in
       '';
     };
 
+    services.freifunk.prometheus.exporters.batmanAdvTextexport = {
+      enable = true;
+    };
+
     networking.firewall.allowedUDPPorts = lib.mapAttrsToList
     (name: domain: domain.fastd.port)
     (lib.filterAttrs (_: domain: domain.fastd.enable) enabledDomains);
