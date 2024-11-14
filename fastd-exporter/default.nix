@@ -40,6 +40,11 @@ in
       description = "The name of the service.";
     };
 
+    ipASNlookupTimeout = mkOption {
+      type = types.int;
+      default = 300;
+      description = "milliseconds to wait for ip->asn lookup to finish";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -53,7 +58,7 @@ in
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
       serviceConfig = {
-        ExecStart = "${pkgs.fastd-exporter}/bin/fastd-exporter -web.listen-address ${cfg.listenAddress}:${toString cfg.port} ${instanceArgs}";
+        ExecStart = "${pkgs.fastd-exporter}/bin/fastd-exporter -web.listen-address ${cfg.listenAddress}:${toString cfg.port} -ip-asn-lookup.timeout ${toString cfg.ipASNlookupTimeout} ${instanceArgs}";
         Restart = "always";
         RestartSec = "30s";
       };
