@@ -5,18 +5,18 @@
 
 buildGoModule rec {
   pname = "fastd-exporter";
-  version = "0-unstable-2024-02-06";
+  version = "0-unstable-2024-04-09";
 
   src = fetchFromGitHub {
     owner = "freifunk-darmstadt";
     repo = "fastd-exporter";
-    rev = "fb7aca668ed7d4631be91f05954b9fa1309c0445";
-    sha256 = "sha256-34GHNOvqoGmY2qwjViX5hza9MiLC3DahbL/DUfzkcGY=";
+    rev = "374e4334af6661f4c91a3e83bf7ce071a2a72eca";
+    sha256 = "sha256-0oU4+9G19XP5qtGdcfMz08T04hjcoXX/O+FkaUPxzXE=";
   };
 
   ldflags = [ "-s" "-w" ];
 
-  vendorHash = "sha256-huejHEfTJHhdvoCy4Qz+gpbKyrHCTgTzdw6tu0FlIp0=";
+  vendorHash = "sha256-r0W64dct6XWa9sIrzy0UdyoMw+kAq73Qc/QchmsYZkY=";
 
   meta = with lib; {
     description = "prometheus exporter for fastd";
