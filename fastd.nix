@@ -141,6 +141,6 @@ in
   };
 
   config = mkIf (cfg != {}) {
-    systemd.services = listToAttrs (mapAttrsFlatten (name: value: nameValuePair "${value.unitName}" (makeFastdJob value name)) cfg);
+    systemd.services = listToAttrs (mapAttrsToList (name: value: nameValuePair "${value.unitName}" (makeFastdJob value name)) cfg);
   };
 }
