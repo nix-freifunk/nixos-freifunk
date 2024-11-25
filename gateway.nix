@@ -768,7 +768,7 @@ in
     '';
 
     services.kea.dhcp4.settings.subnet4 = lib.mapAttrsToList (_: domain: mkIf domain.ipv4.dhcpV4.enable {
-      id = domain.id;
+      id = (domain.id + 1);
       subnet = domain.ipv4.prefixes."${(builtins.elemAt (lib.attrNames domain.ipv4.prefixes) 0)}".prefix;
       interface = "${domain.batmanAdvanced.interfaceName}";
       option-data = []
