@@ -742,10 +742,8 @@ in
             BatmanAdvanced = lib.mkIf domain.batmanAdvanced.enable "${domain.batmanAdvanced.interfaceName}";
           };
           bridgeFDBs = builtins.map (remoteIp: {
-            bridgeFDBConfig = {
-              Destination=remoteIp;
-              MACAddress="00:00:00:00:00:00";
-            };
+            Destination=remoteIp;
+            MACAddress="00:00:00:00:00:00";
           }) domain.vxlan.remoteLocalsRO;
         };
       };
