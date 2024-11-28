@@ -16,6 +16,10 @@ let
 
   enabledDomainsBird = lib.filterAttrs (_: value: value.bird.enable) enabledDomains;
 
+  hasEnabledBirdDomain = lib.any (domain: domain.bird.enable) (lib.attrValues enabledDomains);
+
+  hasEnabledFastdDomain = lib.any (domain: domain.fastd.enable) (lib.attrValues enabledDomains);
+
   enabledFastdUnits = lib.mapAttrsToList (name: domain: lib.lists.optionals domain.fastd.enable "${config.services.fastd.${name}.unitName}.service") enabledDomains;
 
   # set of all gw nodes
@@ -542,7 +546,7 @@ in
       "net.core.wmem_max" = 8388608;
     };
 
-    services.freifunk.bird = {
+    services.freifunk.bird = lib.mkIf hasEnabledBirdDomain {
       enable = true;
 
       extraConfig = ''
@@ -604,21 +608,21 @@ in
       });
     })];
 
-    services.fastd-exporter = {
+    services.fastd-exporter = lib.mkIf hasEnabledFastdDomain {
       enable = true;
       instances = lib.mapAttrs (name: domain: config.services.fastd.${name}.statusSocket) enabledDomains;
     };
 
-    systemd.services.${config.services.fastd-exporter.unitName} = {
+    systemd.services.${config.services.fastd-exporter.unitName} = lib.mkIf hasEnabledFastdDomain {
       after = enabledFastdUnits;
     };
 
-    systemd.services.${config.services.fastd-peergroup-nodes.unitNameSetup} = {
+    systemd.services.${config.services.fastd-peergroup-nodes.unitNameSetup} = lib.mkIf hasEnabledFastdDomain {
       before = enabledFastdUnits;
       requiredBy = enabledFastdUnits;
     };
 
-    systemd.services.${config.services.fastd-peergroup-nodes.unitName} = {
+    systemd.services.${config.services.fastd-peergroup-nodes.unitName} = lib.mkIf hasEnabledFastdDomain {
       after = enabledFastdUnits ++ [ "${config.services.fastd-peergroup-nodes.unitNameSetup}.service" ];
       requires = enabledFastdUnits ++ [ "${config.services.fastd-peergroup-nodes.unitNameSetup}.service" ];
     };
