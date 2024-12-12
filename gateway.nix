@@ -413,6 +413,13 @@ in
                 '';
                 default = [];
               };
+              captivePortalURL = mkOption {
+                type = types.str;
+                description = ''
+                  Value of Option 104 - Captive Portal URL (RFC8910). Defaults to announce an unrestricted network.
+                '';
+                default = "urn:ietf:params:capport:unrestricted";
+              };
             };
           };
           ipv6 = {
@@ -809,6 +816,11 @@ in
             code = 26;
             data = "${builtins.toString domain.mtu}";
             always-send = true;
+          }
+        ++ lib.optional (domain.ipv4.dhcpV4.captivePortalURL != "")
+          {
+            "name" = "v4-captive-portal";
+            "data" = "${domain.ipv4.dhcpV4.captivePortalURL}";
           }
       #   ++ [
       #   {
