@@ -20,6 +20,10 @@ in
       type = types.lines;
       default = "";
     };
+    extraFilters = lib.mkOption {
+      type = types.lines;
+      default = "";
+    };
     extraTemplates = lib.mkOption {
       type = types.lines;
       default = "";
@@ -117,6 +121,8 @@ in
         }
 
         ${cfg.extraFunctions}
+
+        ${cfg.extraFilters}
 
         protocol direct d_dummy0 {
           interface "${config.systemd.network.netdevs."10-dummy0".netdevConfig.Name}";
