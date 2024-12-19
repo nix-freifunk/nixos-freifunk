@@ -574,7 +574,7 @@ in
               other config no;
               solicited ra unicast yes;
 
-              ${lib.concatStringsSep "\n    " (builtins.map (ipv6: "prefix "+ipv6.prefix+" { };") (lib.filter (domain: domain.announce) (lib.attrValues domain.ipv6.prefixes)))}
+              ${lib.concatStringsSep "\n    " (builtins.map (ipv6: "prefix "+ipv6.prefix+" { };") (lib.filter (prefix: prefix.announce) (lib.attrValues domain.ipv6.prefixes)))}
 
               rdnss {
                 ${lib.concatStringsSep "\n      " (builtins.map (dnsServer: "ns "+dnsServer+";") domain.ipv6.dnsServers)}
