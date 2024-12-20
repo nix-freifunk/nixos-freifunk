@@ -851,7 +851,10 @@ in
           ${lib.concatStringsSep "\n  " (lib.mapAttrsToList (_: domain: ''ip version 4 iifname { "${domain.batmanAdvanced.interfaceName}" } udp sport 68 udp dport 67 counter accept comment "accept dhcp: ${domain.name}"'') enabledDomains)}
         }
         chain forward_extra {
-          ${lib.concatStringsSep "\n  " (lib.mapAttrsToList (_: domain:
+          ${lib.concatStringsSep "\n  " (lib.mapAttrsToList (dname: domain: let
+            notCurrentDomain = lib.filterAttrs (name: _: name != dname) enabledDomains;
+            notCurrentDomainNames = builtins.attrNames notCurrentDomain;
+          in
           ''
             ${ if cfg.blockTCPPort25 then ''
             iifname "${domain.batmanAdvanced.interfaceName}" tcp dport 25 counter reject comment "${domain.name}: don't allow smtp"
@@ -861,10 +864,11 @@ in
             '' else "" }
 
             ip saddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv4.prefixes)} } iifname "${domain.batmanAdvanced.interfaceName}" oifname "${cfg.outInterface}" counter accept comment "${domain.name}: accept outgoing ipv4"
-            ip saddr { 10.0.0.0/8, 172.16.0.0/12, 192.0.2.0/24, 192.168.0.0/16, 198.51.100.0/24, 203.0.113.0/24 } iifname "${cfg.outInterface}" oifname "${domain.batmanAdvanced.interfaceName}" counter accept comment "${domain.name}: accept incoming from internal ips"
+            ip saddr { ${lib.concatStringsSep ", " (builtins.concatMap (domain: lib.attrNames cfg.domains.${domain}.ipv4.prefixes) notCurrentDomainNames)} } ip daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv4.prefixes)} } iifname { ${lib.concatStringsSep ", " (builtins.concatMap (domain: [cfg.domains.${domain}.batmanAdvanced.interfaceName]) notCurrentDomainNames)} } oifname "${domain.batmanAdvanced.interfaceName}" counter accept comment "${domain.name}: accept from other domains ipv4"
             ip daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv4.prefixes)} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" ct state established,related counter accept comment "${domain.name}: accept incoming related and established ipv4"
             
             ip6 saddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv6.prefixes)} } iifname "${domain.batmanAdvanced.interfaceName}" oifname "${cfg.outInterface}" counter accept comment "${domain.name}: accept outgoing ipv6"
+            ip6 saddr { ${lib.concatStringsSep ", " (builtins.concatMap (domain: lib.attrNames cfg.domains.${domain}.ipv6.prefixes) notCurrentDomainNames)} } ip6 daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv6.prefixes)} } iifname { ${lib.concatStringsSep ", " (builtins.concatMap (domain: [cfg.domains.${domain}.batmanAdvanced.interfaceName]) notCurrentDomainNames)} } oifname "${domain.batmanAdvanced.interfaceName}" counter accept comment "${domain.name}: accept from other domains ipv6"
             # ip6 daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv6.prefixes)} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" ct state established,related counter accept comment "${domain.name}: accept incoming related and established ipv6"
             ip6 daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv6.prefixes)} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" counter accept comment "${domain.name}: accept incoming ipv6"
           '') enabledDomains)}
