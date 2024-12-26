@@ -37,12 +37,12 @@ in
   options.modules.freifunk.gateway = {
     enable = mkEnableOption "ffda gateway";
 
-    outInterface = mkOption {
-      type = types.str;
+    outInterfaces = mkOption {
+      type = types.listOf types.str;
       description = ''
-        Interface used for connecting to the internet.
+        Interfaces used to route through from domains.
       '';
-      default = "enp1s0";
+      default = [ "enp1s0" ];
     };
 
     vxlanInterface = mkOption {
@@ -50,7 +50,7 @@ in
       description = ''
         Interface used as the base vxlan interfaces.
       '';
-      default = cfg.outInterface;
+      default = builtins.elemAt cfg.outInterfaces 0;
     };
 
     meta = {
@@ -767,11 +767,15 @@ in
 
     networking.nftables.tables.mangle.content = ''
       chain forward_extra {
-        ${lib.concatStringsSep "\n  " (lib.mapAttrsToList (_: domain: ''
-          ip version 4 iifname "${domain.batmanAdvanced.interfaceName}" oifname { "bat-dom*", "${cfg.outInterface}", "wg-icvpn*" } tcp flags syn / syn,rst counter tcp option maxseg size set 1240 comment "mss clamping - ${domain.name} - v4"
-          ip version 4 iifname { "bat-dom*", "${cfg.outInterface}", "wg-icvpn*" } oifname "${domain.batmanAdvanced.interfaceName}" tcp flags syn / syn,rst counter tcp option maxseg size set 1240 comment "mss clamping - ${domain.name} - v4"
-          ip version 6 iifname "${domain.batmanAdvanced.interfaceName}" oifname { "bat-dom*", "${cfg.outInterface}", "wg-icvpn*" } tcp flags syn / syn,rst counter tcp option maxseg size set 1220 comment "mss clamping - ${domain.name} - v6"
-          ip version 6 iifname { "bat-dom*", "${cfg.outInterface}", "wg-icvpn*" } oifname "${domain.batmanAdvanced.interfaceName}" tcp flags syn / syn,rst counter tcp option maxseg size set 1220 comment "mss clamping - ${domain.name} - v6"
+        ${lib.concatStringsSep "\n  " (lib.mapAttrsToList (dname: domain: let
+            notCurrentDomain = lib.filterAttrs (name: _: name != dname) enabledDomains;
+            notCurrentDomainNames = builtins.attrNames notCurrentDomain;
+          in
+        ''
+          ip version 4 iifname "${domain.batmanAdvanced.interfaceName}" oifname { "${lib.concatStringsSep "\", \"" (cfg.outInterfaces ++ builtins.concatMap (domain: [cfg.domains.${domain}.batmanAdvanced.interfaceName]) notCurrentDomainNames)} )}" } tcp flags syn / syn,rst counter tcp option maxseg size set 1240 comment "mss clamping - ${domain.name} - v4"
+          ip version 4 iifname { "${lib.concatStringsSep "\", \"" (cfg.outInterfaces ++ builtins.concatMap (domain: [cfg.domains.${domain}.batmanAdvanced.interfaceName]) notCurrentDomainNames)} )}" } oifname "${domain.batmanAdvanced.interfaceName}" tcp flags syn / syn,rst counter tcp option maxseg size set 1240 comment "mss clamping - ${domain.name} - v4"
+          ip version 6 iifname "${domain.batmanAdvanced.interfaceName}" oifname { "${lib.concatStringsSep "\", \"" (cfg.outInterfaces ++ builtins.concatMap (domain: [cfg.domains.${domain}.batmanAdvanced.interfaceName]) notCurrentDomainNames)} )}" } tcp flags syn / syn,rst counter tcp option maxseg size set 1220 comment "mss clamping - ${domain.name} - v6"
+          ip version 6 iifname { "${lib.concatStringsSep "\", \"" (cfg.outInterfaces ++ builtins.concatMap (domain: [cfg.domains.${domain}.batmanAdvanced.interfaceName]) notCurrentDomainNames)} )}" } oifname "${domain.batmanAdvanced.interfaceName}" tcp flags syn / syn,rst counter tcp option maxseg size set 1220 comment "mss clamping - ${domain.name} - v6"
         '') enabledDomains)}
       }
     '';
@@ -863,14 +867,14 @@ in
             oifname "${domain.batmanAdvanced.interfaceName}" tcp sport 25 counter reject comment "${domain.name}: don't allow smtp"
             '' else "" }
 
-            ip saddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv4.prefixes)} } iifname "${domain.batmanAdvanced.interfaceName}" oifname "${cfg.outInterface}" counter accept comment "${domain.name}: accept outgoing ipv4"
-            ip saddr { ${lib.concatStringsSep ", " (builtins.concatMap (domain: lib.attrNames cfg.domains.${domain}.ipv4.prefixes) notCurrentDomainNames)} } ip daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv4.prefixes)} } iifname { ${lib.concatStringsSep ", " (builtins.concatMap (domain: [cfg.domains.${domain}.batmanAdvanced.interfaceName]) notCurrentDomainNames)} } oifname "${domain.batmanAdvanced.interfaceName}" counter accept comment "${domain.name}: accept from other local domains ipv4"
-            ip daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv4.prefixes)} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" ct state established,related counter accept comment "${domain.name}: accept incoming related and established ipv4"
+            ip saddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv4.prefixes)} } iifname "${domain.batmanAdvanced.interfaceName}" oifname { "${lib.concatStringsSep "\", \"" cfg.outInterfaces}" } counter accept comment "${domain.name}: accept outgoing ipv4"
+            ip saddr { ${lib.concatStringsSep ", " (builtins.concatMap (domain: lib.attrNames cfg.domains.${domain}.ipv4.prefixes) notCurrentDomainNames)} } ip daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv4.prefixes)} } iifname { "${lib.concatStringsSep "\", \"" (builtins.concatMap (domain: [cfg.domains.${domain}.batmanAdvanced.interfaceName]) notCurrentDomainNames)}" } oifname "${domain.batmanAdvanced.interfaceName}" counter accept comment "${domain.name}: accept from other local domains ipv4"
+            ip daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv4.prefixes)} } oifname "${domain.batmanAdvanced.interfaceName}" iifname { "${lib.concatStringsSep "\", \"" cfg.outInterfaces}" } ct state established,related counter accept comment "${domain.name}: accept incoming related and established ipv4"
             
-            ip6 saddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv6.prefixes)} } iifname "${domain.batmanAdvanced.interfaceName}" oifname "${cfg.outInterface}" counter accept comment "${domain.name}: accept outgoing ipv6"
-            ip6 saddr { ${lib.concatStringsSep ", " (builtins.concatMap (domain: lib.attrNames cfg.domains.${domain}.ipv6.prefixes) notCurrentDomainNames)} } ip6 daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv6.prefixes)} } iifname { ${lib.concatStringsSep ", " (builtins.concatMap (domain: [cfg.domains.${domain}.batmanAdvanced.interfaceName]) notCurrentDomainNames)} } oifname "${domain.batmanAdvanced.interfaceName}" counter accept comment "${domain.name}: accept from other local domains ipv6"
-            # ip6 daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv6.prefixes)} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" ct state established,related counter accept comment "${domain.name}: accept incoming related and established ipv6"
-            ip6 daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv6.prefixes)} } oifname "${domain.batmanAdvanced.interfaceName}" iifname "${cfg.outInterface}" counter accept comment "${domain.name}: accept incoming ipv6"
+            ip6 saddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv6.prefixes)} } iifname "${domain.batmanAdvanced.interfaceName}" oifname { "${lib.concatStringsSep "\", \"" cfg.outInterfaces}" } counter accept comment "${domain.name}: accept outgoing ipv6"
+            ip6 saddr { ${lib.concatStringsSep ", " (builtins.concatMap (domain: lib.attrNames cfg.domains.${domain}.ipv6.prefixes) notCurrentDomainNames)} } ip6 daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv6.prefixes)} } iifname { "${lib.concatStringsSep "\", \"" (builtins.concatMap (domain: [cfg.domains.${domain}.batmanAdvanced.interfaceName]) notCurrentDomainNames)}" } oifname "${domain.batmanAdvanced.interfaceName}" counter accept comment "${domain.name}: accept from other local domains ipv6"
+            # ip6 daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv6.prefixes)} } oifname "${domain.batmanAdvanced.interfaceName}" iifname { "${lib.concatStringsSep "\", \"" cfg.outInterfaces}" } ct state established,related counter accept comment "${domain.name}: accept incoming related and established ipv6"
+            ip6 daddr { ${lib.concatStringsSep ", " (lib.mapAttrsToList(name: value: value.prefix) domain.ipv6.prefixes)} } oifname "${domain.batmanAdvanced.interfaceName}" iifname { "${lib.concatStringsSep "\", \"" cfg.outInterfaces}" } counter accept comment "${domain.name}: accept incoming ipv6"
           '') enabledDomains)}
         }
       '';
