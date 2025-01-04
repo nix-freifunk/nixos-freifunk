@@ -320,6 +320,13 @@ in
               '';
               default = cfg.fastd.peerLimit;
             };
+            methods = mkOption {
+              type = types.listOf types.str;
+              description = ''
+                List of fastd methods to use.
+              '';
+              default = [ "null@l2tp" "null" ];
+            };
           };
           bird = {
             enable = mkEnableOption "start bird for this domain" // { default = true; };
@@ -641,7 +648,7 @@ in
         interface = domain.fastd.peerInterfacePattern;
         mode = "multitap";
         peerDir = domain.fastd.peerDir;
-        method = [ "null@l2tp" "null" ];
+        method = domain.fastd.methods;
         bind = [ "any port ${toString domain.fastd.port}" ];
         secretKeyIncludeFile = domain.fastd.secretKeyIncludeFile;
         persistInterface = false;
